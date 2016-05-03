@@ -4,13 +4,11 @@ import re,subprocess
 src = "ITMA-catalogue_20160216.xml"
 xslt_src = "soutron2mods.xsl"
 
-# print sorted(list(tag_list))
-DOWHAT = 'READ'
+DOWHAT = 'WRITE'
 
 transform = etree.XSLT(etree.parse(xslt_src))
 if DOWHAT == 'WRITE':
 	element_list = etree.Element("recordlist")
-
 	tag_list = set()
 	last_mtype = None
 	n_items = 5
@@ -31,7 +29,8 @@ if DOWHAT == 'WRITE':
 			last_mtype = mtype
 			counter += 1
 		tree = etree.ElementTree(element_list)
-		tree.write("itma.recordlist.xml",encoding='UTF-8',pretty_print=True)
+		print etree.tostring(tree)
+		# tree.write("itma.recordlist.xml",encoding='UTF-8',pretty_print=True)
 else:
 	tree = etree.parse("itma.recordlist.xml")
 
