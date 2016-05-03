@@ -1,46 +1,62 @@
 from lxml import etree
 import re,subprocess
 
+regexpNS = "http://exslt.org/regular-expressions"
+
+def parse_materials(tree):
+	types = ['Sound Recording','Image','Printed Material','Serial Issue','Video','Copy']
+	short_names = {'Sound Recording':'audio','Printed Material':'printed','Serial Issue':'serial','Copy':'copy','Image':'image','Video':'video'}
+	data = {}
+	for t in types:
+		print t
+		data[short_names[t]] = tree.xpath("/recordlist/record[DocType/text() = '%s']" % t)
+	return data
+
+def parse_audio_carriers(tree,carrier):
+	audio_carriers = {}
+	carriers = {}
+	carriers['CYL'] = ["Sound Cylinder"]
+	carriers['GALVANO'] = ["Galvanoplastic"]
+	carriers['ACE'] = ["Acetate"]
+	carriers['78'] = ["78"]
+	carriers['LP'] = ["LP",'45']
+	carriers['SP'] = ["SP"]
+	carriers['EP'] = ["EP","Vinyl EPS"]
+	carriers['REEL'] = ["Reel",'reel']
+	carriers['CD'] = ["Enhanced Compact","Compact","Compact Disc",'Audio CD']
+	carriers['CS'] = ["Audio Cassette","Audio  Cassette","Cassette",'Audio Casette','1 sound cassette']
+	carriers['DAT'] = ["DAT","ADAT"]
+	carriers['MD'] = ["MiniDisc"]
+	carriers['AIFF'] = ['AIFF']
+	carriers['WAV'] = ["WAV","Audio file"]
+	carriers['MP3'] = ["MP3"]
+	carriers['FLAC'] = ["FLAC"]
+	# for item in carriers.iteritems():
+	starts_with_strings = " or ".join(['MaterialType[starts-with(text(),\'%s\')]'%x for x in carriers[carrier]])
+	# audio_carriers[carrier] = tree.xpath('/recordlist/record[%s]' % starts_with_strings)
+	return tree.xpath('/recordlist/record[%s]' % starts_with_strings)
+
 src = "itma.cat.soutron_20160216.xml"
 
-types = ['Sound Recording','Image','Printed Material','Serial Issue','Video','Copy']
+tree = etree.parse(src)
 
-short_names = {'Sound Recording':'sounds','Printed Material':'prints','Serial Issue':'serials','Copy':'copies'}
+element_list = etree.Element("recordlist")
 
-data = etree.parse(src)
+data = [element_list.append(x) for x in parse_audio_carriers(tree,'78')]
 
-carriers = {
-	'sounds': {
-		'CYL':ur'cyl(inder)',
-		'78s':ur'(78\s*(rpm))',
-		'LP':ur'(?:LP|L\.P\.)',
-		'REEL':ur'(?:reel-to-reel|reel)',
-		'CS':ur'(?:CS|cassette)',
-		'CD':ur'(?:compact disc|CD|C\.D\.)',
-		'WAV':ur'(?:WAVE file|WAV file|wav file)',
-		'MP3':ur'(?:MP3|MP3 file)'
-	}
-}
+etree.ElementTree(element_list).write('record_groups/audio/itma.78s.xml',pretty_print = True,encoding='UTF-8')
 
-for carrier in carriers['sounds'].iteritems():
-	name = carrier[0]
-	regex = carrier[-1]
-	element_list = etree.Element("recordlist")
-	# if name == '78s':
-		
-		# with open(src,'r') as f:
-		# 	data = "".join(f.readlines()).replace('\r\n','')
-		# 	splitter = re.findall(u'<row cid="\d+" Deleted="0">(<DocType>%s</DocType>(?:(?!<\/row>).)*)' % doc_type,data,re.DOTALL)
-		# 	for i,el in enumerate(splitter):
-		# 		node = etree.fromstring("<record>%s</record>" % el)
-		# 		node.set('CID', unicode(i+1))
-		# 		element_list.append(node)
-		# 		if j == "test" and i > 5000:
-		# 			break
-		# 	tree = etree.ElementTree(element_list)
-		# 	if doc_type in short_names.keys():
-		# 		write_name = short_names[doc_type]
-		# 	else:
-		# 		write_name = doc_type.lower()+'s' 
-		# 	if j == "test":
-		# 		tree.write("record_groups/itma.recordlist.%s.test.xml"%write_name,encoding='UTF-8',pretty_print=True)
+# print tree.xpath("/recordlist/record[MaterialType[starts-with(text(),'ADAT')] or MaterialType[starts-with(text(),'DAT')]]")
+
+# materials = parse_materials(tree)
+
+# parse_audio_carriers(materials['audio'])
+
+# all_carriers = sorted(set(tree.xpath("/recordlist/record/MaterialType/text()")))
+
+# for c in all_carriers:
+# 	print c
+
+# print len(all_carriers)
+
+
