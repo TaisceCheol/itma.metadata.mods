@@ -66,7 +66,7 @@
 			<xsl:apply-templates select="AlsoHeldAt"/>
 			
 			<!--	<mods:accessCondition/>	-->
-			<xsl:apply-templates select="Copyright"/>
+			<xsl:call-template name="Copyright"/>
 			
 			<!--	<mods:recordInfo/>	-->
 			<xsl:call-template name="recordInfo"/>
@@ -200,10 +200,8 @@
 		</mods:language>
 	</xsl:template>
 
-	<xsl:template match="Copyright">
-		<mods:accessCondition type="use and reproduction" xlinkhref="http://creativecommons.org/publicdomain/mark/1.0/">
-			This work is free of known copyright restrictions.
-		</mods:accessCondition>
+	<xsl:template name="Copyright">
+		<mods:accessCondition type="use and reproduction" xlinkhref="http://creativecommons.org/publicdomain/mark/1.0/">This work is free of known copyright restrictions.</mods:accessCondition>
 	</xsl:template>
 	
 	<xsl:template match="MatrixNumber">
