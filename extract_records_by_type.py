@@ -3,8 +3,6 @@ from lxml import etree
 from dateutil.parser import parse as parse_date
 from datetime import date
 
-regexpNS = "http://exslt.org/regular-expressions"
-
 def parse_materials(tree):
 	types = ['Sound Recording','Image','Printed Material','Serial Issue','Video','Copy']
 	short_names = {'Sound Recording':'audio','Printed Material':'printed','Serial Issue':'serial','Copy':'copy','Image':'image','Video':'video'}
@@ -15,7 +13,7 @@ def parse_materials(tree):
 	return data
 
 def process_date_fields(record):
-	'''format dates to ISO-8601 where possible'''
+	'''format dates to ISO-8601 subset w3cdtf where possible'''
 	date_fields = ['CreationDate','PublicationDate','AccessionDate','CreatedDate']
 	matches = []
 	for field in date_fields:
@@ -26,8 +24,8 @@ def process_date_fields(record):
 				if el.text.find('[') != -1 or el.text.find(']') != -1:
 					el.attrib['qualifier'] = 'inferred'
 				date_string = parse_date(el.text.lstrip('[').rstrip(']')) 
-				date_string = date.isoformat(date_string).replace('-','')
-				el.attrib['encoding'] = 'iso8601'
+				date_string = date.isoformat(date_string)
+				el.attrib['encoding'] = 'w3cdtf'
 				el.text = date_string
 			except:
 				date_string = el.text
@@ -38,8 +36,8 @@ def process_date_fields(record):
 					el.attrib['qualifier'] = 'inferred'
 				date_string = "%s-%s-%s" % (data.get('start_year',''),data.get('start_month',''),data.get('start_day',''))
 				date_string = parse_date(date_string)
-				date_string = date.isoformat(date_string).replace('-','')
-				el.attrib['encoding'] = 'iso8601'
+				date_string = date.isoformat(date_string)
+				el.attrib['encoding'] = 'w3cdtf'
 				el.text = date_string
 
 def parse_audio_carriers(tree,carrier):
@@ -73,9 +71,9 @@ tree = etree.parse(src)
 
 element_list = etree.Element("recordlist")
 
-print 'parsing'
+carrier = '78'
 
-data = parse_audio_carriers(tree,'78')
+data = parse_audio_carriers(tree,carrier)
 
 data = sorted(data,key=lambda x:int(x.get("CID")))
 
@@ -83,7 +81,7 @@ data = sorted(data,key=lambda x:int(x.get("CID")))
 
 [element_list.append(x) for x in data]
 
-etree.ElementTree(element_list).write('record_groups/audio/itma.78s.xml',pretty_print = True,encoding='UTF-8')
+etree.ElementTree(element_list).write('record_groups/audio/itma.%s.xml' % carrier,pretty_print = True,encoding='UTF-8')
 
 
 
