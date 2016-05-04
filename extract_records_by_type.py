@@ -44,7 +44,7 @@ def parse_audio_carriers(tree,carrier):
 	audio_carriers = {}
 	carriers = {}
 	carriers['CYL'] = ["Sound Cylinder"]
-	carriers['GALVANO'] = ["Galvanoplastic"]
+	carriers['GAL'] = ["Galvanoplastic"]
 	carriers['ACE'] = ["Acetate"]
 	carriers['78'] = ["78"]
 	carriers['LP'] = ["LP",'45']
@@ -71,7 +71,7 @@ tree = etree.parse(src)
 
 element_list = etree.Element("recordlist")
 
-carrier = 'CYL'
+carrier = 'GAL'
 
 data = parse_audio_carriers(tree,carrier)
 

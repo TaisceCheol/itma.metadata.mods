@@ -16,10 +16,12 @@
 		<mods:mods>
 			<!--	<mods:titleInfo/>	-->
 			<xsl:apply-templates select="Title"/>
+			<xsl:apply-templates select="AlternativeTitle"/>
 			
 			<!--	<mods:name/>	-->
 			<xsl:apply-templates select="People"/>
 			<xsl:apply-templates select="Creator"/>
+			<xsl:apply-templates select="Contributors"/>
 			
 			<!--	<mods:typeOfResource/>	-->
 			<xsl:apply-templates select="DocType"/>
@@ -86,7 +88,19 @@
 			</xsl:choose>
 		</mods:titleInfo>
 	</xsl:template>
-	
+
+	<xsl:template match="AlternativeTitle">
+		<xsl:variable name="titleProper" select="substring-before(substring-before(.,'/'),'[sound recording]')"/>
+		<mods:titleInfo type="alternative">
+			<xsl:choose>
+				<xsl:when test="$titleProper != ''">
+					<mods:title><xsl:value-of select="normalize-space($titleProper)"/></mods:title>
+				</xsl:when>
+				<xsl:otherwise><mods:title><xsl:value-of select="."/></mods:title></xsl:otherwise>
+			</xsl:choose>
+		</mods:titleInfo>
+	</xsl:template>	
+
 	<xsl:template match="People">
 		<mods:name type="personal">
 			<mods:namePart type="given"><xsl:value-of select="substring-before(.,' ')"/></mods:namePart>

@@ -7,9 +7,9 @@ transforms = [os.path.join('xslt_transforms/audio',x) for x in filter(lambda x: 
 
 print transforms
 
-transform = etree.XSLT(etree.parse(transforms[1]))
+transform = etree.XSLT(etree.parse(transforms[0]))
 
-carrier = 'CYL'
+carrier = '78'
 
 records = "record_groups/audio/itma.%s.xml" % carrier
 
