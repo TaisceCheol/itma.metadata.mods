@@ -1,5 +1,7 @@
-from lxml import etree
 import re,subprocess
+from lxml import etree
+from dateutil.parser import parse as parse_date
+from datetime import date
 
 regexpNS = "http://exslt.org/regular-expressions"
 
@@ -11,6 +13,34 @@ def parse_materials(tree):
 		print t
 		data[short_names[t]] = tree.xpath("/recordlist/record[DocType/text() = '%s']" % t)
 	return data
+
+def process_date_fields(record):
+	'''format dates to ISO-8601 where possible'''
+	date_fields = ['CreationDate','PublicationDate','AccessionDate','CreatedDate']
+	matches = []
+	for field in date_fields:
+		[matches.append(x) for x in record.xpath('%s'%field)]
+	for el in matches:
+		if el.text:
+			try:
+				if el.text.find('[') != -1 or el.text.find(']') != -1:
+					el.attrib['qualifier'] = 'inferred'
+				date_string = parse_date(el.text.lstrip('[').rstrip(']')) 
+				date_string = date.isoformat(date_string).replace('-','')
+				el.attrib['encoding'] = 'iso8601'
+				el.text = date_string
+			except:
+				date_string = el.text
+		else:
+			data = el.attrib
+			if data['nodate'] == '0':
+				if data['circa'] == '1':
+					el.attrib['qualifier'] = 'inferred'
+				date_string = "%s-%s-%s" % (data.get('start_year',''),data.get('start_month',''),data.get('start_day',''))
+				date_string = parse_date(date_string)
+				date_string = date.isoformat(date_string).replace('-','')
+				el.attrib['encoding'] = 'iso8601'
+				el.text = date_string
 
 def parse_audio_carriers(tree,carrier):
 	audio_carriers = {}
@@ -31,10 +61,11 @@ def parse_audio_carriers(tree,carrier):
 	carriers['WAV'] = ["WAV","Audio file"]
 	carriers['MP3'] = ["MP3"]
 	carriers['FLAC'] = ["FLAC"]
-	# for item in carriers.iteritems():
 	starts_with_strings = " or ".join(['MaterialType[starts-with(text(),\'%s\')]'%x for x in carriers[carrier]])
-	# audio_carriers[carrier] = tree.xpath('/recordlist/record[%s]' % starts_with_strings)
-	return tree.xpath('/recordlist/record[%s]' % starts_with_strings)
+	element_list = etree.Element("recordlist")
+	audio_elements = tree.xpath("/recordlist/record[DocType[text() = 'Sound Recording']]")
+	[element_list.append(x) for x in audio_elements]
+	return etree.ElementTree(element_list).xpath("/recordlist/record[%s]" % starts_with_strings)
 
 src = "itma.cat.soutron_20160216.xml"
 
@@ -42,21 +73,17 @@ tree = etree.parse(src)
 
 element_list = etree.Element("recordlist")
 
-data = [element_list.append(x) for x in parse_audio_carriers(tree,'78')]
+print 'parsing'
+
+data = parse_audio_carriers(tree,'78')
+
+data = sorted(data,key=lambda x:int(x.get("CID")))
+
+[process_date_fields(x) for x in data]
+
+[element_list.append(x) for x in data]
 
 etree.ElementTree(element_list).write('record_groups/audio/itma.78s.xml',pretty_print = True,encoding='UTF-8')
 
-# print tree.xpath("/recordlist/record[MaterialType[starts-with(text(),'ADAT')] or MaterialType[starts-with(text(),'DAT')]]")
-
-# materials = parse_materials(tree)
-
-# parse_audio_carriers(materials['audio'])
-
-# all_carriers = sorted(set(tree.xpath("/recordlist/record/MaterialType/text()")))
-
-# for c in all_carriers:
-# 	print c
-
-# print len(all_carriers)
 
 
