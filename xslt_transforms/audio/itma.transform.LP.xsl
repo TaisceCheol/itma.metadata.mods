@@ -17,12 +17,13 @@
 			<!--	<mods:titleInfo/>	-->
 			<xsl:apply-templates select="Title"/>
 			<xsl:apply-templates select="AlternativeTitle"/>
+			<xsl:call-template name="generateAltTitles"/>
 			
 			<!--	<mods:name/>	-->
 			<xsl:apply-templates select="People"/>
 			<xsl:apply-templates select="Creator"/>
 			<xsl:apply-templates select="Contributors"/>
-		
+			
 			<!--	<mods:typeOfResource/>	-->
 			<xsl:apply-templates select="DocType"/>
 			
@@ -40,16 +41,17 @@
 			<xsl:apply-templates select="PhysicalDescription"/>
 			
 			<!--	<mods:abstract/>	-->
-			<xsl:apply-templates select="Context"/>
+			<xsl:apply-templates select="Context"/>	
 			
 			<!--	<mods:tableOfContents/>	-->			
 			<xsl:call-template  name="TableOfContents"/>
 			
 			<!--	<mods:note/>	-->
 			<mods:note type="statement of responsibility"><xsl:value-of select="normalize-space(substring-after(Title,'/ '))"/></mods:note>
-			<xsl:if test="Notes">
-				<mods:note><xsl:value-of select="Notes"/></mods:note>
-			</xsl:if>	
+			<xsl:apply-templates select="Notes"/>
+			<xsl:apply-templates select="Documentation"/>
+			<xsl:apply-templates select="Illustrations"/>
+			
 			<xsl:call-template name="Price"/>
 			
 			<!--	<mods:subject/>	-->			
@@ -99,7 +101,19 @@
 				<xsl:otherwise><mods:title><xsl:value-of select="."/></mods:title></xsl:otherwise>
 			</xsl:choose>
 		</mods:titleInfo>
-	</xsl:template>		
+	</xsl:template>	
+	
+	<xsl:template name="generateAltTitles">
+		<xsl:variable name="titleProper" select="substring-before(substring-before(Title,'/'),'[sound recording]')"/>
+		<xsl:if test="substring-before($titleProper,'=')">
+			<mods:titleInfo type="alternative">
+				<mods:title><xsl:value-of select="normalize-space(substring-before($titleProper,'='))"/></mods:title>
+			</mods:titleInfo>
+			<mods:titleInfo type="alternative">
+				<mods:title><xsl:value-of select="normalize-space(substring-after($titleProper,'='))"/></mods:title>
+			</mods:titleInfo>			
+		</xsl:if>
+	</xsl:template>
 	
 	<xsl:template match="People">
 		<mods:name type="personal">
@@ -127,7 +141,7 @@
 	</xsl:template>
 
 	<xsl:template name="Genre">
-		<mods:genre authority="aat" type="Concept" displayLabel="Format" authorityURI="http://vocab.getty.edu/aat/" valueURI="http://vocab.getty.edu/aat/300265790">78 rpm records</mods:genre>
+		<mods:genre authority="aat" type="Concept" displayLabel="Format" authorityURI="http://vocab.getty.edu/aat/" valueURI="http://vocab.getty.edu/aat/300265802">long-playing records</mods:genre>
 	</xsl:template>
 
 	<xsl:template match="DocType">
@@ -162,7 +176,6 @@
 	</xsl:template>
 
 	<xsl:template match="ArchiveLocation">
-		<xsl:if test="ArchiveLocation/text() != '-'">
 			<mods:location>
 				<mods:physicalLocation>Irish Traditional Music Archive</mods:physicalLocation>
 				<mods:holdingSimple>
@@ -177,7 +190,6 @@
 					</xsl:choose>
 				</mods:holdingSimple>
 			</mods:location>
-		</xsl:if>
 	</xsl:template>	
 	
 	<xsl:template match="PhysicalDescription">
@@ -247,6 +259,22 @@
 		</xsl:if>
 	</xsl:template>
 
+	<xsl:template match="Notes">
+		<mods:note><xsl:value-of select="."/></mods:note>
+	</xsl:template>
+	
+	<xsl:template match="Documentation">
+		<mods:note type="documentation"><xsl:value-of select="."/></mods:note>
+	</xsl:template>
+
+	<xsl:template match="Illustrations">
+		<mods:note type="illustrations"><xsl:value-of select="."/></mods:note>
+	</xsl:template>
+
+	<xsl:template match="TypeOfSource">
+		<mods:note type="accrual method"><xsl:value-of select="."/></mods:note>
+	</xsl:template>
+
 	<xsl:template name="Language">
 		<xsl:if test="Language">
 			<mods:language>
@@ -258,7 +286,8 @@
 	</xsl:template>
 
 	<xsl:template name="Copyright">
-		<mods:accessCondition type="use and reproduction" xlinkhref="http://creativecommons.org/publicdomain/mark/1.0/">This work is free of known copyright restrictions.</mods:accessCondition>
+		<mods:accessCondition type="use and reproduction">Copyright <xsl:value-of select="Copyright"/></mods:accessCondition>
+		<mods:accessCondition type="use and reproduction" xlinkhref="http://rightsstatements.org/vocab/InC/1.0/">This item is protected by copyright and/or related rights. You are free to use this Item in any way that is permitted by the copyright and related rights legislation that applies to your use. For other uses you need to obtain permission from the rights-holder(s).</mods:accessCondition>
 	</xsl:template>
 	
 	<xsl:template match="MatrixNumber">
@@ -290,7 +319,7 @@
 		
 		<xsl:variable name="titleProper_track_a" select="substring-before($track_a, ' /')"/>
 		<xsl:variable name="names_track_a" select="substring-after($track_a, '/ ')"/>
-
+		
 		<xsl:variable name="titleProper_track_b" select="substring-before($track_b, ' /')"/>
 		<xsl:variable name="names_track_b" select="substring-after($track_b, '/ ')"/>
 		
@@ -308,9 +337,6 @@
 					<mods:namePart><xsl:value-of select="substring-before($names_track_a, ', ')"/></mods:namePart>
 				</mods:name>
 			</xsl:if>
-			<mods:indentifier type="matrix number">
-				<xsl:value-of select="(MatrixNumber)[1]"/>
-			</mods:indentifier>
 		</mods:relatedItem>
 		
 		<mods:relatedItem type="constituent" ID="DMD_disc01_side002">
@@ -327,11 +353,14 @@
 					<mods:namePart><xsl:value-of select="substring-before($names_track_b, ', ')"/></mods:namePart>
 				</mods:name>
 			</xsl:if>
-			<mods:indentifier type="matrix number">
-				<xsl:value-of select="(MatrixNumber)[2]"/>
-			</mods:indentifier>
 		</mods:relatedItem>		
-		
+				
+		<xsl:for-each select="Contents">
+			<mods:relatedItem type="constituent">
+				<mods:titleInfo><xsl:value-of select='.'/></mods:titleInfo>
+			</mods:relatedItem>
+		</xsl:for-each>
+				
 		<xsl:if test="ReIssue">
 			<mods:relatedItem type="otherFormat">
 				<mods:note type="reissue"><xsl:value-of select="ReIssue"/></mods:note>
@@ -417,4 +446,5 @@
 			</mods:holdingSimple>
 		</mods:location>
 	</xsl:template>
+	
 </xsl:stylesheet>

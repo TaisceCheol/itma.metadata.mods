@@ -50,7 +50,7 @@
 			<!--	<mods:note/>	-->
 			<mods:note type="statement of responsibility"><xsl:value-of select="normalize-space(substring-after(Title,'/ '))"/></mods:note>
 			<xsl:if test="Documentation">
-				<mods:notes type="documentation"><xsl:value-of select="Documentation"/></mods:notes>
+				<mods:note type="documentation"><xsl:value-of select="Documentation"/></mods:note>
 			</xsl:if>				
 			<xsl:call-template name="Price"/>
 			
@@ -317,6 +317,14 @@
 		<xsl:if test="PreIssue">
 			<mods:relatedItem type="otherFormat">
 				<mods:note type="preissue"><xsl:value-of select="PreIssue"/></mods:note>
+			</mods:relatedItem>
+		</xsl:if>
+
+		<xsl:if test="CollectionTitle">
+			<mods:relatedItem type="host" displayLabel="Collection">
+				<mods:titleInfo>
+					<mods:title><xsl:value-of select="CollectionTitle"/></mods:title>
+				</mods:titleInfo>
 			</mods:relatedItem>
 		</xsl:if>
 

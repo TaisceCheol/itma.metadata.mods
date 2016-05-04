@@ -258,7 +258,8 @@
 	</xsl:template>
 
 	<xsl:template name="Copyright">
-		<mods:accessCondition type="use and reproduction"><xsl:value-of select="/Copyright"></xsl:value-of></mods:accessCondition>
+		<mods:accessCondition type="use and reproduction">Copyright <xsl:value-of select="Copyright"/></mods:accessCondition>
+		<mods:accessCondition type="use and reproduction" xlinkhref="http://rightsstatements.org/vocab/InC/1.0/">This item is protected by copyright and/or related rights. You are free to use this Item in any way that is permitted by the copyright and related rights legislation that applies to your use. For other uses you need to obtain permission from the rights-holder(s).</mods:accessCondition>
 	</xsl:template>
 	
 	<xsl:template match="MatrixNumber">
@@ -335,6 +336,14 @@
 		<xsl:if test="PreIssue">
 			<mods:relatedItem type="otherFormat">
 				<mods:note type="preissue"><xsl:value-of select="PreIssue"/></mods:note>
+			</mods:relatedItem>
+		</xsl:if>
+
+		<xsl:if test="CollectionTitle">
+			<mods:relatedItem type="host" displayLabel="Collection">
+				<mods:titleInfo>
+					<mods:title><xsl:value-of select="CollectionTitle"/></mods:title>
+				</mods:titleInfo>
 			</mods:relatedItem>
 		</xsl:if>
 

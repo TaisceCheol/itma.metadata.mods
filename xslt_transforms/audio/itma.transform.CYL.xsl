@@ -318,6 +318,14 @@
 			</mods:relatedItem>
 		</xsl:if>
 
+		<xsl:if test="CollectionTitle">
+			<mods:relatedItem type="host" displayLabel="Collection">
+				<mods:titleInfo>
+					<mods:title><xsl:value-of select="CollectionTitle"/></mods:title>
+				</mods:titleInfo>
+			</mods:relatedItem>
+		</xsl:if>
+
 	</xsl:template>
 	
 	<xsl:template match="Subjects">
