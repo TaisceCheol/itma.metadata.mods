@@ -332,6 +332,12 @@
 			</mods:indentifier>
 		</mods:relatedItem>		
 		
+		<xsl:for-each select="Contents">
+			<mods:relatedItem type="constituent">
+				<mods:titleInfo><xsl:value-of select='.'/></mods:titleInfo>
+			</mods:relatedItem>
+		</xsl:for-each>		
+		
 		<xsl:if test="ReIssue">
 			<mods:relatedItem type="otherFormat">
 				<mods:note type="reissue"><xsl:value-of select="ReIssue"/></mods:note>

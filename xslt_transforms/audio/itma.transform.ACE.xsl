@@ -287,13 +287,11 @@
 	
 	<xsl:template name="getRelatedItems">		
 		<xsl:variable name="track_a"><xsl:value-of select="TrackA"/></xsl:variable>
-		<xsl:variable name="track_b"><xsl:value-of select="TrackB"/></xsl:variable>
 		
 		<xsl:variable name="titleProper_track_a" select="substring-before($track_a, ' /')"/>
 		<xsl:variable name="names_track_a" select="substring-after($track_a, '/ ')"/>
 		
-		<xsl:variable name="titleProper_track_b" select="substring-before($track_b, ' /')"/>
-		<xsl:variable name="names_track_b" select="substring-after($track_b, '/ ')"/>
+
 		
 		<mods:relatedItem type="constituent" ID="DMD_disc01_sd001">
 			<mods:titleInfo>
@@ -310,22 +308,12 @@
 				</mods:name>
 			</xsl:if>
 		</mods:relatedItem>
-		
-		<mods:relatedItem type="constituent" ID="DMD_disc01_sd002">
-			<mods:titleInfo>
-				<xsl:choose>
-					<xsl:when test="$titleProper_track_b != ''">
-						<mods:title><xsl:value-of select="$titleProper_track_b"/></mods:title>
-					</xsl:when>
-					<xsl:otherwise><mods:title><xsl:value-of select="$track_b"/></mods:title></xsl:otherwise>
-				</xsl:choose>
-			</mods:titleInfo>	
-			<xsl:if test="substring-before($names_track_b, ', ')">
-				<mods:name type="personal">
-					<mods:namePart><xsl:value-of select="substring-before($names_track_b, ', ')"/></mods:namePart>
-				</mods:name>
-			</xsl:if>
-		</mods:relatedItem>	
+				
+		<xsl:for-each select="Contents">
+			<mods:relatedItem type="constituent">
+				<mods:titleInfo><xsl:value-of select='.'/></mods:titleInfo>
+			</mods:relatedItem>
+		</xsl:for-each>				
 				
 		<xsl:if test="ReIssue">
 			<mods:relatedItem type="otherFormat">
