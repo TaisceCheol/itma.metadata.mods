@@ -7,9 +7,9 @@ transforms = [os.path.join('xslt_transforms/audio',x) for x in filter(lambda x: 
 
 print transforms
 
-transform = etree.XSLT(etree.parse(transforms[0]))
+transform = etree.XSLT(etree.parse(transforms[1]))
 
-carrier = '78'
+carrier = 'ACE'
 
 records = "record_groups/audio/itma.%s.xml" % carrier
 
@@ -24,4 +24,3 @@ for i,record in enumerate(record_xml.iterchildren()):
 
 transformed_record = transform(elements)
 transformed_record.write(os.path.join(output_dir,'itma.mods.test.%s.xml') % carrier,encoding='UTF-8',pretty_print=True)
-# print etree.tostring(transformed_record,pretty_print=True)
