@@ -47,9 +47,7 @@ def parse_audio_carriers(tree,carrier):
 	carriers['GAL'] = ["Galvanoplastic"]
 	carriers['ACE'] = ["Acetate"]
 	carriers['78'] = ["78"]
-	carriers['LP'] = ["LP",'45']
-	carriers['SP'] = ["SP"]
-	carriers['EP'] = ["EP","Vinyl EPS"]
+	carriers['LP'] = ["LP",'45','SP',"EP","Vinyl EPS"]
 	carriers['REEL'] = ["Reel",'reel']
 	carriers['CD'] = ["Enhanced Compact","Compact","Compact Disc",'Audio CD']
 	carriers['CS'] = ["Audio Cassette","Audio  Cassette","Cassette",'Audio Casette','1 sound cassette']
@@ -71,7 +69,7 @@ tree = etree.parse(src)
 
 element_list = etree.Element("recordlist")
 
-carrier = 'LP'
+carrier = 'REEL'
 
 data = parse_audio_carriers(tree,carrier)
 
