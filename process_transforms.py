@@ -8,7 +8,7 @@ def get_transform(carrier):
 output_dir = 'test_transform_outputs'
 
 # for carrier in  ['CYL','78','GAL','ACE','LP','REEL']:
-for carrier in ['REEL']:
+for carrier in ['CD']:
 	transform = get_transform(carrier)
 
 	records = "record_groups/audio/itma.%s.xml" % carrier

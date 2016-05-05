@@ -34,7 +34,7 @@ def process_date_fields(record):
 			if data['nodate'] == '0':
 				if data['circa'] == '1':
 					el.attrib['qualifier'] = 'inferred'
-				date_string = "%s-%s-%s" % (data.get('start_year',''),data.get('start_month',''),data.get('start_day',''))
+				date_string = "-".join(filter(lambda x:len(x)==0,[data.get('start_year',''),data.get('start_month',''),data.get('start_day','')]))
 				date_string = parse_date(date_string)
 				date_string = date.isoformat(date_string)
 				el.attrib['encoding'] = 'w3cdtf'
@@ -69,7 +69,7 @@ tree = etree.parse(src)
 
 element_list = etree.Element("recordlist")
 
-carrier = 'REEL'
+carrier = 'CD'
 
 data = parse_audio_carriers(tree,carrier)
 
