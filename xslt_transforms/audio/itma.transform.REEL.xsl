@@ -15,38 +15,38 @@
 	<xsl:template match="record">
 		<mods:mods>
 			<!--	<mods:titleInfo/>	-->
-<!--			<xsl:apply-templates select="Title"/>
+			<xsl:apply-templates select="Title"/>
 			<xsl:apply-templates select="AlternativeTitle"/>
 			<xsl:call-template name="generateAltTitles"/>
 			
-			<!-\-	<mods:name/>	-\->
+			<!--	<mods:name/>	-->
 			<xsl:apply-templates select="People"/>
 			<xsl:apply-templates select="Creator"/>
 			<xsl:apply-templates select="Contributors"/>
 			
-			<!-\-	<mods:typeOfResource/>	-\->
+			<!--	<mods:typeOfResource/>	-->
 			<xsl:apply-templates select="DocType"/>
 			
-			<!-\-	<mods:genre/>	-\->
+			<!--	<mods:genre/>	-->
 			<xsl:call-template name="Genre"/>
 			
-			<!-\-	<mods:originInfo/>	-\->
+			<!--	<mods:originInfo/>	-->
 			<xsl:call-template name="CreationInfo"/>
 			<xsl:call-template name="PublicationInfo"/>
 			
-			<!-\-	<mods:language/>	-\->
+			<!--	<mods:language/>	-->
 			<xsl:call-template name="Language"/>
 			
-			<!-\-	<mods:physicalDescription/>	-\->
+			<!--	<mods:physicalDescription/>	-->
 			<xsl:apply-templates select="PhysicalDescription"/>
 			
-			<!-\-	<mods:abstract/>	-\->
+			<!--	<mods:abstract/>	-->
 			<xsl:apply-templates select="Context"/>	
 			
-			<!-\-	<mods:tableOfContents/>	-\->			
+			<!--	<mods:tableOfContents/>	-->			
 			<xsl:call-template  name="TableOfContents"/>
 			
-			<!-\-	<mods:note/>	-\->
+			<!--	<mods:note/>	-->
 			<mods:note type="statement of responsibility"><xsl:value-of select="normalize-space(substring-after(Title,'/ '))"/></mods:note>
 			<xsl:apply-templates select="Notes"/>
 			<xsl:apply-templates select="Documentation"/>
@@ -54,28 +54,28 @@
 			
 			<xsl:call-template name="Price"/>
 			
-			<!-\-	<mods:subject/>	-\->			
+			<!--	<mods:subject/>	-->			
 			<xsl:apply-templates select="Subjects"/>
 			<xsl:apply-templates select="GeographicalLocation"/>
-			-->
+			
 			<!--	<mods:relatedItem/>	-->			
 			<xsl:call-template name="getRelatedItems"/>
 			
 			<!--	<mods:identifier/>	-->			
-<!--			<xsl:apply-templates select="ITMAReference"/>	
+			<xsl:apply-templates select="ITMAReference"/>	
 			<xsl:apply-templates select="CatalogueNumber"/>				
 			<xsl:apply-templates select="InternalLink"/>
 			<mods:identifier type="local">CID-<xsl:value-of select="@CID"/></mods:identifier>
 			
-			<!-\-	<mods:location/>	-\->
+			<!--	<mods:location/>	-->
 			<xsl:apply-templates select="ArchiveLocation"/>	
 			<xsl:apply-templates select="AlsoHeldAt"/>
 			
-			<!-\-	<mods:accessCondition/>	-\->
+			<!--	<mods:accessCondition/>	-->
 			<xsl:call-template name="Copyright"/>
 			
-			<!-\-	<mods:recordInfo/>	-\->
-			<xsl:call-template name="recordInfo"/>-->
+			<!--	<mods:recordInfo/>	-->
+			<xsl:call-template name="recordInfo"/>
 			
 		</mods:mods>
 	</xsl:template>
@@ -142,7 +142,7 @@
 	</xsl:template>
 
 	<xsl:template name="Genre">
-		<mods:genre authority="aat" type="Concept" displayLabel="Format" authorityURI="http://vocab.getty.edu/aat/" valueURI="http://vocab.getty.edu/aat/300265802">long-playing records</mods:genre>
+		<mods:genre authority="aat" type="Concept" displayLabel="Format" authorityURI="http://vocab.getty.edu/aat/" valueURI="http://vocab.getty.edu/aat/300374971">tape reels</mods:genre>
 	</xsl:template>
 
 	<xsl:template match="DocType">
@@ -314,35 +314,15 @@
 		<xsl:value-of select="."/>
 	</xsl:template>
 	
-	<xsl:template name="getRelatedItems">		
-		<!--<xsl:variable name="titleProper_track_a" select="substring-before($track_a, ' /')"/>
-		<xsl:variable name="names_track_a" select="substring-after($track_a, '/ ')"/>-->
-		
+	<xsl:template name="getRelatedItems">			
 		<xsl:for-each select="*[starts-with(name(),'Track')]">
 			<mods:relatedItem type="constituent">
 				<xsl:attribute name="ID">DMD_reel01_band00<xsl:value-of select="position()"/></xsl:attribute>
 				<mods:tableOfContents><xsl:value-of select="."></xsl:value-of></mods:tableOfContents>
 			</mods:relatedItem>
-		</xsl:for-each>
-		
-<!--		<mods:relatedItem type="constituent" ID="DMD_reel01_band001">
-			<mods:titleInfo>
-				<xsl:choose>
-					<xsl:when test="$titleProper_track_a != ''">
-						<mods:title><xsl:value-of select="$titleProper_track_a"/></mods:title>
-					</xsl:when>
-					<xsl:otherwise><mods:title><xsl:value-of select="$track_a"/></mods:title></xsl:otherwise>
-				</xsl:choose>
-			</mods:titleInfo>	
-			<xsl:if test="substring-before($names_track_a, ', ')">
-				<mods:name type="personal">
-					<mods:namePart><xsl:value-of select="substring-before($names_track_a, ', ')"/></mods:namePart>
-				</mods:name>
-			</xsl:if>
-		</mods:relatedItem>-->
-		
+		</xsl:for-each>	
 	
-<!--		<xsl:for-each select="Contents">
+		<xsl:for-each select="Contents">
 			<mods:relatedItem type="constituent">
 				<mods:titleInfo><xsl:value-of select='.'/></mods:titleInfo>
 			</mods:relatedItem>
@@ -366,8 +346,7 @@
 					<mods:title><xsl:value-of select="CollectionTitle"/></mods:title>
 				</mods:titleInfo>
 			</mods:relatedItem>
-		</xsl:if>-->
-
+		</xsl:if>
 	</xsl:template>
 	
 	<xsl:template match="Subjects">
