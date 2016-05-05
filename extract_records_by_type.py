@@ -88,7 +88,7 @@ tree = etree.parse(src)
 
 element_list = etree.Element("recordlist")
 
-carrier = 'DAT'
+carrier = 'MD'
 
 data = parse_audio_carriers(tree,carrier)
 
