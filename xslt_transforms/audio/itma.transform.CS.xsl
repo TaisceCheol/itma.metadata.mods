@@ -144,7 +144,7 @@
 	</xsl:template>
 
 	<xsl:template name="Genre">
-		<mods:genre authority="aat" type="Concept" displayLabel="Format" authorityURI="http://vocab.getty.edu/aat/" valueURI="http://vocab.getty.edu/aat/300028673">compact discs</mods:genre>
+		<mods:genre authority="aat" type="Concept" displayLabel="Format" authorityURI="http://vocab.getty.edu/aat/" valueURI="http://vocab.getty.edu/aat/300028661">audiocassettes</mods:genre>
 	</xsl:template>
 
 	<xsl:template match="DocType">
@@ -328,7 +328,7 @@
 			
 			<xsl:for-each select="exsl:node-set($tracks)/mods:titleInfo/mods:title">
 				<mods:relatedItem type="constituent">
-					<xsl:attribute name="ID">DMD_disc0<xsl:value-of select="$disc_number"/>_track0<xsl:value-of select="position()"/></xsl:attribute>
+					<xsl:attribute name="ID">DMD_side0<xsl:value-of select="$disc_number"/>_track0<xsl:value-of select="position()"/></xsl:attribute>
 					<mods:titleInfo>
 						<xsl:copy-of select="."/> 
 					</mods:titleInfo>

@@ -321,7 +321,7 @@
 				<mods:tableOfContents><xsl:value-of select="."></xsl:value-of></mods:tableOfContents>
 			</mods:relatedItem>
 		</xsl:for-each>	
-	
+
 		<xsl:for-each select="Contents">
 			<mods:relatedItem type="constituent">
 				<mods:titleInfo><xsl:value-of select='.'/></mods:titleInfo>
@@ -412,5 +412,22 @@
 			</mods:holdingSimple>
 		</mods:location>
 	</xsl:template>
+	
+	
+	<xsl:template name="tokenize">
+		<xsl:param name="pText" select="."/>
+		<xsl:variable name="delimiter" select="'&lt;br/&gt;'"/>		
+		<xsl:if test="string-length($pText) >0">
+			<mods:titleInfo>
+				<mods:title>
+					<xsl:value-of select="substring-before(concat($pText, $delimiter), $delimiter)"/>
+				</mods:title>
+			</mods:titleInfo>
+			<xsl:call-template name="tokenize">
+				<xsl:with-param name="pText" select=
+					"substring-after($pText, $delimiter)"/>
+			</xsl:call-template>
+		</xsl:if>
+	</xsl:template>		
 	
 </xsl:stylesheet>
