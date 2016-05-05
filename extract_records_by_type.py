@@ -1,7 +1,8 @@
 import re,subprocess
 from lxml import etree
-from dateutil.parser import parse as parse_date
-from datetime import date
+# from dateutil.parser import parse as parse
+from dateparser import parse,date
+# from datetime import date
 
 def parse_materials(tree):
 	types = ['Sound Recording','Image','Printed Material','Serial Issue','Video','Copy']
@@ -20,23 +21,41 @@ def process_date_fields(record):
 		[matches.append(x) for x in record.xpath('%s'%field)]
 	for el in matches:
 		if el.text:
-			try:
-				if el.text.find('[') != -1 or el.text.find(']') != -1:
-					el.attrib['qualifier'] = 'inferred'
-				date_string = parse_date(el.text.lstrip('[').rstrip(']')) 
-				date_string = date.isoformat(date_string)
-				el.attrib['encoding'] = 'w3cdtf'
-				el.text = date_string
-			except:
+			if el.text.find('[') != -1 or el.text.find(']') != -1:
+				el.attrib['qualifier'] = 'inferred'		
+			if el.text == '[n.d.]':
 				date_string = el.text
+			else:
+				try:
+					el.text = date_string
+					date_obj = date.DateDataParser().get_date_data(el.text.lstrip('[').rstrip(']').strip()) 
+					if date_obj['period'] == 'year':
+						el.attrib['encoding'] = 'w3cdtf'
+						date_string = date_obj['date_obj'].isoformat()[0:4]
+					elif date_obj['period'] == 'month':
+						el.attrib['encoding'] = 'w3cdtf'
+						date_string = date_obj['date_obj'].isoformat()[0:7]
+					elif date_obj['period'] == 'day':
+						el.attrib['encoding'] = 'w3cdtf'
+						date_string = date_obj['date_obj'].isoformat()[0:10]
+					else:
+						date_string = el.text
+				except:
+					date_string = el.text
 		else:
 			data = el.attrib
 			if data['nodate'] == '0':
 				if data['circa'] == '1':
 					el.attrib['qualifier'] = 'inferred'
-				date_string = "-".join(filter(lambda x:len(x)==0,[data.get('start_year',''),data.get('start_month',''),data.get('start_day','')]))
-				date_string = parse_date(date_string)
-				date_string = date.isoformat(date_string)
+				date_bits = filter(lambda x:len(x)!=0,[data.get('start_year',''),data.get('start_month',''),data.get('start_day','')])
+				date_string = "-".join([x for x in date_bits])
+				date_string = parse(date_string)
+				if len(date_bits) == 1:
+					date_string = date_string.isoformat()[0:4]
+				elif len(date_bits) == 2:
+					date_string = date_string.isoformat()[0:7]
+				elif len(date_bits) == 3:
+					date_string = date_string.isoformat()[0:10]
 				el.attrib['encoding'] = 'w3cdtf'
 				el.text = date_string
 
