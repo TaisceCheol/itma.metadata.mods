@@ -72,8 +72,7 @@ def parse_audio_carriers(tree,carrier):
 	carriers['CS'] = ["Audio Cassette","Audio  Cassette","Cassette",'Audio Casette','1 sound cassette']
 	carriers['DAT'] = ["DAT","ADAT"]
 	carriers['MD'] = ["MiniDisc"]
-	carriers['AIFF'] = ['AIFF']
-	carriers['WAV'] = ["WAV","Audio file"]
+	carriers['WAV'] = ["WAV","Audio file","AIFF"]
 	carriers['MP3'] = ["MP3"]
 	carriers['FLAC'] = ["FLAC"]
 	starts_with_strings = " or ".join(['MaterialType[starts-with(text(),\'%s\')]'%x for x in carriers[carrier]])
@@ -88,7 +87,7 @@ tree = etree.parse(src)
 
 element_list = etree.Element("recordlist")
 
-carrier = 'MD'
+carrier = 'WAV'
 
 data = parse_audio_carriers(tree,carrier)
 
