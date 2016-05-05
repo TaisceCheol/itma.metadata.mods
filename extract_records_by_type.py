@@ -87,11 +87,13 @@ tree = etree.parse(src)
 
 element_list = etree.Element("recordlist")
 
-carrier = 'WAV'
+carrier = 'FLAC'
 
 data = parse_audio_carriers(tree,carrier)
 
 data = sorted(data,key=lambda x:int(x.get("CID")))
+
+print len(data)
 
 [process_date_fields(x) for x in data]
 
