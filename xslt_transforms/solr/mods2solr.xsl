@@ -18,7 +18,7 @@
 			<xsl:apply-templates select="mods:language"/>
 			<xsl:apply-templates select="mods:subject/mods:topic"/>
 			<xsl:apply-templates select="mods:subject/mods:geographic"/>
-			<xsl:apply-templates select="mods:originInfo[@eventType = 'publication']"/>
+			<!-- <xsl:apply-templates select="mods:originInfo[@eventType = 'publication']"/> -->
 			<xsl:apply-templates select="mods:typeOfResource"/>
 			<xsl:apply-templates select="mods:abstract"/>
 			<xsl:apply-templates select="mods:physicalDescription/mods:extent"/>
@@ -104,7 +104,7 @@
 	</xsl:template>
 
 	<xsl:template match="mods:physicalDescription/mods:note[@type = 'running-time']">
-		<field name="physical_description_s">
+		<field name="running_time_s">
 			<xsl:value-of select="."/>
 		</field>
 	</xsl:template>
