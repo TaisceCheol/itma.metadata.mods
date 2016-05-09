@@ -101,7 +101,7 @@ tree = etree.parse(src)
 
 element_list = etree.Element("recordlist")
 
-carrier = 'BK'
+carrier = 'TH'
 
 data = parse_print_carriers(tree,carrier)
 

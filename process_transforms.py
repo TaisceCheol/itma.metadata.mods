@@ -8,7 +8,7 @@ def get_transform(carrier):
 output_dir = 'mods_records'
 
 # for carrier in  ['CYL','78','GAL','ACE','LP','REEL','CS','CD','DAT','WAV','MP3','FLAC']:
-for carrier in ['BK']:
+for carrier in ['TH']:
 	transform = get_transform(carrier)
 
 	records = "record_groups/prints/itma.%s.xml" % carrier
