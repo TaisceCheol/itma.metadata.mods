@@ -77,8 +77,22 @@ def parse_audio_carriers(tree,carrier):
 	carriers['FLAC'] = ["FLAC"]
 	starts_with_strings = " or ".join(['MaterialType[starts-with(text(),\'%s\')]'%x for x in carriers[carrier]])
 	element_list = etree.Element("recordlist")
-	audio_elements = tree.xpath("/recordlist/record[DocType[text() = 'Sound Recording']]")
-	[element_list.append(x) for x in audio_elements]
+	elements = tree.xpath("/recordlist/record[DocType[text() = 'Sound Recording']]")
+	[element_list.append(x) for x in elements]
+	return etree.ElementTree(element_list).xpath("/recordlist/record[%s]" % starts_with_strings)
+
+def parse_print_carriers(tree,carrier):
+	audio_carriers = {}
+	carriers = {}
+	carriers['BK'] = ["Book"]
+	carriers['TH'] = ["Thesis"]
+	carriers['EX'] = ["Extract"]
+	carriers['SR'] = ["Serial","Serial Issue"]
+	carriers['SM'] = ["Sheet Music"]
+	starts_with_strings = " or ".join(['MaterialType[starts-with(text(),\'%s\')]'%x for x in carriers[carrier]])
+	element_list = etree.Element("recordlist")
+	elements = tree.xpath("/recordlist/record[DocType[text() = 'Printed Material']]")
+	[element_list.append(x) for x in elements]
 	return etree.ElementTree(element_list).xpath("/recordlist/record[%s]" % starts_with_strings)
 
 src = "itma.cat.soutron_20160216.xml"
@@ -87,9 +101,9 @@ tree = etree.parse(src)
 
 element_list = etree.Element("recordlist")
 
-carrier = 'FLAC'
+carrier = 'TH'
 
-data = parse_audio_carriers(tree,carrier)
+data = parse_print_carriers(tree,carrier)
 
 data = sorted(data,key=lambda x:int(x.get("CID")))
 
@@ -99,7 +113,7 @@ print len(data)
 
 [element_list.append(x) for x in data]
 
-etree.ElementTree(element_list).write('record_groups/audio/itma.%s.xml' % carrier,pretty_print = True,encoding='UTF-8')
+etree.ElementTree(element_list).write('record_groups/prints/itma.%s.xml' % carrier,pretty_print = True,encoding='UTF-8')
 
 
 

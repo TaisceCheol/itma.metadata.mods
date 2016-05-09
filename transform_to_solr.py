@@ -3,7 +3,7 @@ from lxml import etree
 
 data = glob.glob("test_transform_outputs/**.xml")
 
-parsed_data = [etree.parse(x) for x in data[4:5]]
+parsed_data = [etree.parse(x) for x in data]
 
 transform_path = "xslt_transforms/solr/mods2solr.xsl"
 

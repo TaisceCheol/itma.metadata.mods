@@ -36,21 +36,19 @@
 	</xsl:template>
 
 	<xsl:template match="mods:titleInfo">
-		<field name="title_display">
-			<xsl:value-of select="./mods:title"/>
-		</field>
+		<field name="title_display"><xsl:value-of select="./mods:title"/></field>
+		<field name="title_t"><xsl:value-of select="./mods:title"/></field>
 	</xsl:template>
 
-	<xsl:template match="mods:titleInfo[@type = 'alternative']">
+<!-- 	<xsl:template match="mods:titleInfo[@type = 'alternative']">
 		<field name="subtitle_display">
 			<xsl:value-of select="./mods:title"/>
 		</field>
-	</xsl:template>
+	</xsl:template> -->
 
 	<xsl:template match="mods:note[@type = 'statement of responsibility']">
-		<field name="author_display">
-			<xsl:value-of select="."/>
-		</field>
+		<field name="author_display"><xsl:value-of select="."/></field>
+		<field name="author_t"><xsl:value-of select="."/></field>
 	</xsl:template>
 
 	<xsl:template match="mods:language">
@@ -111,7 +109,7 @@
 
 	<xsl:template match="mods:accessCondition">
 		<xsl:for-each select=".">
-			<field name="copyright_s">
+			<field name="copyright_t">
 				<xsl:value-of select="."/>
 			</field>
 		</xsl:for-each>
@@ -124,7 +122,7 @@
 	</xsl:template>
 
 	<xsl:template match="mods:tableOfContents">
-		<field name="contents_txt">
+		<field name="contents_t">
 			<xsl:value-of select="."/>
 		</field>
 	</xsl:template>
