@@ -83,7 +83,7 @@
 	</xsl:template>
 
 	<xsl:template match="Title">
-		<xsl:variable name="titleProper" select="substring-before(substring-before(.,'/'),'[sound recording]')"/>
+		<xsl:variable name="titleProper" select="substring-before(.,'/')"/>
 		<mods:titleInfo>
 			<xsl:choose>
 				<xsl:when test="$titleProper != ''">
@@ -95,7 +95,7 @@
 	</xsl:template>
 	
 	<xsl:template match="AlternativeTitle">
-		<xsl:variable name="titleProper" select="substring-before(substring-before(.,'/'),'[sound recording]')"/>
+		<xsl:variable name="titleProper" select="substring-before(.,'/')"/>
 		<mods:titleInfo type="alternative">
 			<xsl:choose>
 				<xsl:when test="$titleProper != ''">
@@ -107,7 +107,7 @@
 	</xsl:template>	
 	
 	<xsl:template name="generateAltTitles">
-		<xsl:variable name="titleProper" select="substring-before(substring-before(Title,'/'),'[sound recording]')"/>
+		<xsl:variable name="titleProper" select="substring-before(Title,'/')"/>
 		<xsl:if test="substring-before($titleProper,'=')">
 			<mods:titleInfo type="alternative">
 				<mods:title><xsl:value-of select="normalize-space(substring-before($titleProper,'='))"/></mods:title>
@@ -144,7 +144,7 @@
 	</xsl:template>
 
 	<xsl:template name="Genre">
-		<mods:genre authority="aat" type="Concept" displayLabel="Format" authorityURI="http://vocab.getty.edu/aat/" valueURI="http://vocab.getty.edu/aat/300312049">WAVE (format)</mods:genre>		
+		<mods:genre authority="aat" type="Concept" displayLabel="Format" authorityURI="http://vocab.getty.edu/aat/" valueURI="http://vocab.getty.edu/aat/300028051">books</mods:genre>		
 	</xsl:template>
 
 	<xsl:template match="DocType">
