@@ -109,9 +109,9 @@ data = sorted(data,key=lambda x:int(x.get("CID")))
 
 print len(data)
 
-[process_date_fields(x) for x in data[0:10]]
+[process_date_fields(x) for x in data]
 
-[element_list.append(x) for x in data[0:10]]
+[element_list.append(x) for x in data]
 
 etree.ElementTree(element_list).write('record_groups/prints/itma.%s.xml' % carrier,pretty_print = True,encoding='UTF-8')
 
