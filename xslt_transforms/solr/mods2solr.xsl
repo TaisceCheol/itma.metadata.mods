@@ -19,7 +19,7 @@
 			<xsl:apply-templates select="mods:language"/>
 			<xsl:apply-templates select="mods:subject/mods:topic"/>
 			<xsl:apply-templates select="mods:subject/mods:geographic"/>
-			<!-- <xsl:apply-templates select="mods:originInfo[@eventType = 'publication']"/> -->
+			<xsl:apply-templates select="mods:originInfo[@eventType = 'publication']"/>
 			<xsl:apply-templates select="mods:typeOfResource"/>
 			<xsl:apply-templates select="mods:abstract"/>
 			<xsl:apply-templates select="mods:physicalDescription/mods:extent"/>
@@ -27,6 +27,7 @@
 			<xsl:apply-templates select="mods:accessCondition"/>
 			<xsl:apply-templates select="mods:genre"/>
 			<xsl:apply-templates select="mods:tableOfContents"/>
+			<xsl:apply-templates select="mods:relatedItem[@displayLabel='Collection']/mods:titleInfo/mods:title"/>
 		</doc>
 	</xsl:template>
 
@@ -93,9 +94,17 @@
 
 	<xsl:template match="mods:originInfo[@eventType = 'publication']">
 		<xsl:for-each select="./mods:dateIssued">
-			<field name="pub_date">
-				<xsl:value-of select="."/>
-			</field>
+			<xsl:choose>
+				<xsl:when test="substring-before(.,'-')">
+					<field name="pub_date"><xsl:value-of select="substring-before(.,'-')"/></field>
+					<field name="pub_date_sort"><xsl:value-of select="substring-before(.,'-')"/></field>
+				</xsl:when>
+				<xsl:otherwise>
+					<field name="pub_date"><xsl:value-of select="."/></field>
+					<field name="pub_date_sort"><xsl:value-of select="."/></field>					
+				</xsl:otherwise>
+			</xsl:choose>
+			<field name="pub_date_display"><xsl:value-of select="."/></field>
 		</xsl:for-each>
 	</xsl:template>
 
@@ -144,6 +153,18 @@
 		<field name="contents_txt">
 			<xsl:value-of select="."/>
 		</field>
+	</xsl:template>
+
+	<xsl:template match="mods:relatedItem[@displayLabel='Collection']/mods:titleInfo/mods:title">
+		<field name="collection_facet">
+			<xsl:value-of select="."/>
+		</field>
+		<field name="collection_t">
+			<xsl:value-of select="."/>
+		</field>	
+		<field name="collection_display">
+			<xsl:value-of select="."/>
+		</field>	
 	</xsl:template>
 
 </xsl:stylesheet>

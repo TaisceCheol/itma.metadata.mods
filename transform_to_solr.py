@@ -16,6 +16,8 @@ for item in parsed_data:
 	for r in records:
 		print r
 		all_records.append(r)
+		# if len(all_records) > 35:break
+	# break
 
 transform(all_records).write('sample_solr_import.xml',pretty_print=True)
 
