@@ -14,6 +14,7 @@
 		<doc>
 			<xsl:apply-templates select="mods:identifier[@type = 'local']"/>
 			<xsl:apply-templates select="mods:titleInfo"/>
+			<xsl:apply-templates select="mods:name"/>
 			<xsl:apply-templates select="mods:note[@type = 'statement of responsibility']"/>
 			<xsl:apply-templates select="mods:language"/>
 			<xsl:apply-templates select="mods:subject/mods:topic"/>
@@ -35,6 +36,11 @@
 		</xsl:if>
 	</xsl:template>
 
+	<xsl:template match="mods:titleInfo[@type='alternative']">
+		<field name="alt_title_display"><xsl:value-of select="./mods:title"/></field>
+		<field name="alt_title_t"><xsl:value-of select="./mods:title"/></field>
+	</xsl:template>
+
 	<xsl:template match="mods:titleInfo">
 		<field name="title_display"><xsl:value-of select="./mods:title"/></field>
 		<field name="title_t"><xsl:value-of select="./mods:title"/></field>
@@ -45,6 +51,16 @@
 			<xsl:value-of select="./mods:title"/>
 		</field>
 	</xsl:template> -->
+
+	<xsl:template match="mods:name">
+		<xsl:if test="./mods:namePart[@type]">
+			<field name="people_t">
+				<xsl:value-of select="./mods:namePart[@type='given']"/>
+				<xsl:text> </xsl:text>
+				<xsl:value-of select="./mods:namePart[@type='family']"/>
+			</field>
+		</xsl:if>
+	</xsl:template>
 
 	<xsl:template match="mods:note[@type = 'statement of responsibility']">
 		<field name="author_display"><xsl:value-of select="."/></field>
@@ -90,7 +106,7 @@
 	</xsl:template>
 
 	<xsl:template match="mods:abstract">
-		<field name="abstract_t">
+		<field name="abstract_txt">
 			<xsl:value-of select="."/>
 		</field>
 	</xsl:template>
@@ -119,6 +135,9 @@
 		<field name="material_facet">
 			<xsl:value-of select="."/>
 		</field>
+		<field name="material_t">
+			<xsl:value-of select="."/>
+		</field>		
 	</xsl:template>
 
 	<xsl:template match="mods:tableOfContents">
