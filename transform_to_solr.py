@@ -14,6 +14,7 @@ all_records = etree.Element("{http://www.loc.gov/mods/v3}modsCollection",)
 for item in parsed_data:
 	records = item.xpath("//mods:mods",namespaces={'mods':'http://www.loc.gov/mods/v3'})
 	for r in records:
+		print r
 		all_records.append(r)
 
 transform(all_records).write('sample_solr_import.xml',pretty_print=True)

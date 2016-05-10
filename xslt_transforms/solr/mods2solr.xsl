@@ -141,7 +141,7 @@
 	</xsl:template>
 
 	<xsl:template match="mods:tableOfContents">
-		<field name="contents_t">
+		<field name="contents_txt">
 			<xsl:value-of select="."/>
 		</field>
 	</xsl:template>
