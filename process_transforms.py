@@ -2,16 +2,16 @@ import os
 from lxml import etree
 
 def get_transform(carrier):
-	transform_path = 'xslt_transforms/print/itma.transform.%s.xsl' % carrier
+	transform_path = 'xslt_transforms/video/itma.transform.%s.xsl' % carrier
 	return etree.XSLT(etree.parse(transform_path))
 
 output_dir = 'mods_records'
 
 # for carrier in  ['CYL','78','GAL','ACE','LP','REEL','CS','CD','DAT','WAV','MP3','FLAC']:
-for carrier in ['TH']:
+for carrier in ['VID']:
 	transform = get_transform(carrier)
 
-	records = "record_groups/prints/itma.%s.xml" % carrier
+	records = "record_groups/video/itma.%s.xml" % carrier
 
 	record_xml = etree.parse(records).getroot()
 

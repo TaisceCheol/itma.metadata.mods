@@ -26,8 +26,9 @@
 			<xsl:apply-templates select="mods:physicalDescription/mods:note[@type = 'running-time']"/>
 			<xsl:apply-templates select="mods:accessCondition"/>
 			<xsl:apply-templates select="mods:genre"/>
-			<xsl:apply-templates select="mods:tableOfContents"/>
+<!--			<xsl:apply-templates select="mods:tableOfContents"/>-->
 			<xsl:apply-templates select="mods:relatedItem[@displayLabel='Collection']/mods:titleInfo/mods:title"/>
+			<xsl:apply-templates select="mods:relatedItem[@type='constituent']/mods:titleInfo/mods:title"/>
 		</doc>
 	</xsl:template>
 
@@ -60,6 +61,11 @@
 				<xsl:text> </xsl:text>
 				<xsl:value-of select="./mods:namePart[@type='family']"/>
 			</field>
+			<field name="people_facet">
+				<xsl:value-of select="./mods:namePart[@type='given']"/>
+				<xsl:text> </xsl:text>
+				<xsl:value-of select="./mods:namePart[@type='family']"/>
+			</field>			
 		</xsl:if>
 	</xsl:template>
 
@@ -144,16 +150,16 @@
 		<field name="material_facet">
 			<xsl:value-of select="."/>
 		</field>
-		<field name="material_t">
+		<field name="material_display">
 			<xsl:value-of select="."/>
 		</field>		
 	</xsl:template>
 
-	<xsl:template match="mods:tableOfContents">
+<!--	<xsl:template match="mods:tableOfContents">
 		<field name="contents_txt">
 			<xsl:value-of select="."/>
 		</field>
-	</xsl:template>
+	</xsl:template>-->
 
 	<xsl:template match="mods:relatedItem[@displayLabel='Collection']/mods:titleInfo/mods:title">
 		<field name="collection_facet">
@@ -165,6 +171,21 @@
 		<field name="collection_display">
 			<xsl:value-of select="."/>
 		</field>	
+	</xsl:template>
+	
+	<xsl:template match="mods:relatedItem[@type='constituent']/mods:titleInfo/mods:title">
+		<field name="contents_t">
+			<xsl:value-of select="."/>
+		</field>	
+		<field name="contents_facet">
+			<xsl:value-of select="."/>
+		</field>			
+	</xsl:template>	
+	
+	<xsl:template match="mods:location/mods:holdingSimple/mods:shelfLocator">
+		<!-- Use this facet to	facet items in archive and not in archive	-->
+		<field name="archive_location_facet"></field>
+		<field name="archive_location_display"><xsl:value-of select="."/></field>
 	</xsl:template>
 
 </xsl:stylesheet>

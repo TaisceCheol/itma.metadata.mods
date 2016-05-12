@@ -88,10 +88,30 @@ def parse_print_carriers(tree,carrier):
 	carriers['TH'] = ["Thesis"]
 	carriers['EX'] = ["Extract"]
 	carriers['SR'] = ["Serial","Serial Issue"]
-	carriers['SM'] = ["Sheet Music"]
+	carriers['SM'] = ["Sheet music"]
 	starts_with_strings = " or ".join(['MaterialType[starts-with(text(),\'%s\')]'%x for x in carriers[carrier]])
 	element_list = etree.Element("recordlist")
 	elements = tree.xpath("/recordlist/record[DocType[text() = 'Printed Material']]")
+	[element_list.append(x) for x in elements]
+	return etree.ElementTree(element_list).xpath("/recordlist/record[%s]" % starts_with_strings)
+
+def parse_image_carriers(tree,carrier):
+	audio_carriers = {}
+	carriers = {}
+	carriers['PH'] = ['Artwork', 'Beer mat', 'Bookmark', 'CDROM', 'Calendar', 'Card', 'Cigarette card', 'Compliments Slip', 'Contact Sheet', 'Digital imag', 'Digital image', 'Dust Jacket', 'Envelope', 'Extract', 'First day cover', 'Flyer', 'Greeting card', 'Negative', 'Photocopy', 'Photograph', 'Postage stamp', 'Postage stamp mini sheet', 'Postcard', 'Poster', 'Sketch', 'Slide', 'Sticker', 'Timetable', 'X-Ray']
+	starts_with_strings = " or ".join(['MaterialType[starts-with(text(),\'%s\')]'%x for x in carriers[carrier]])
+	element_list = etree.Element("recordlist")
+	elements = tree.xpath("/recordlist/record[DocType[text() = 'Image']]")
+	[element_list.append(x) for x in elements]
+	return etree.ElementTree(element_list).xpath("/recordlist/record[%s]" % starts_with_strings)
+
+def parse_video_carriers(tree,carrier):
+	audio_carriers = {}
+	carriers = {}
+	carriers['VID'] = ['2 DVDs + 1 CD', 'BETACAM', 'BETACAMSP', 'BETAMAX', 'CDROM', 'DVCAM', 'DVCAM-M', 'DVD', 'DVD + 1 CD', 'DVD + 1 Compact Disc + 1 insert', 'DVD + 1 Compact Disc + 1 insert + 1 booklet', 'DVD + 1 book', 'DVD + 1 book + 5 posters : col.', 'DVD + 2 CDs + 1 insert', 'DVD + CD', 'DVD + CD + insert', 'DVD-M', 'DVD-R', 'DVDROM', 'Digital Video Tape', 'Enhanced Compact Disc', 'Film', 'Laser Disc', 'MOV file', 'MP4', 'MP4 file', 'MPEG -2 file', 'MXF file', 'SVHS', 'Super VHS', 'UMATIC', 'VHS', 'VHSC', 'Video Hi8', 'Video8', 'Videotape [1/2" tape]']
+	starts_with_strings = " or ".join(['MaterialType[starts-with(text(),\'%s\')]'%x for x in carriers[carrier]])
+	element_list = etree.Element("recordlist")
+	elements = tree.xpath("/recordlist/record[DocType[text() = 'Video']]")
 	[element_list.append(x) for x in elements]
 	return etree.ElementTree(element_list).xpath("/recordlist/record[%s]" % starts_with_strings)
 
@@ -101,9 +121,9 @@ tree = etree.parse(src)
 
 element_list = etree.Element("recordlist")
 
-carrier = 'TH'
+carrier = 'VID'
 
-data = parse_print_carriers(tree,carrier)
+data = parse_video_carriers(tree,carrier)
 
 data = sorted(data,key=lambda x:int(x.get("CID")))
 
@@ -113,7 +133,7 @@ print len(data)
 
 [element_list.append(x) for x in data]
 
-etree.ElementTree(element_list).write('record_groups/prints/itma.%s.xml' % carrier,pretty_print = True,encoding='UTF-8')
+etree.ElementTree(element_list).write('record_groups/video/itma.%s.xml' % carrier,pretty_print = True,encoding='UTF-8')
 
 
 

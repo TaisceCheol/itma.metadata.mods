@@ -29,10 +29,10 @@ if DOWHAT == 'WRITE':
 			last_mtype = mtype
 			counter += 1
 		tree = etree.ElementTree(element_list)
-		print etree.tostring(tree)
+		# print etree.tostring(tree)
 		# tree.write("itma.recordlist.xml",encoding='UTF-8',pretty_print=True)
 else:
 	tree = etree.parse("itma.recordlist.xml")
 
-xtree = transform(tree)
-xtree.write("itma.recordlist.mods.xml",encoding='UTF-8',pretty_print=True)
+# xtree = transform(tree)
+# xtree.write("itma.recordlist.mods.xml",encoding='UTF-8',pretty_print=True)
