@@ -324,7 +324,9 @@
 
 		<xsl:for-each select="Contents">
 			<mods:relatedItem type="constituent">
-				<mods:titleInfo><xsl:value-of select='.'/></mods:titleInfo>
+				<mods:titleInfo>
+					<mods:title><xsl:value-of select='.'/></mods:title>
+				</mods:titleInfo>
 			</mods:relatedItem>
 		</xsl:for-each>
 				

@@ -317,27 +317,29 @@
 	</xsl:template>
 	
 	<xsl:template name="getRelatedItems">			
-		<xsl:if test="TrackA">
-			<xsl:variable name="disc_content" select="TrackA"/>
-			<xsl:variable name="tracks">
+<!-- 		<xsl:if test="Context">
+			<xsl:variable name="context" select="Context"/>
+			<xsl:variable name="elements">
 				<xsl:call-template name="tokenize">
-					<xsl:with-param name="pText" select="$disc_content" />
+					<xsl:with-param name="pText" select="$context" />
 				</xsl:call-template>
 			</xsl:variable>
 			
-			<xsl:for-each select="exsl:node-set($tracks)/mods:titleInfo/mods:title">
+			<xsl:for-each select="exsl:node-set($elements)/mods:titleInfo/mods:title">
 				<mods:relatedItem type="constituent">
-					<xsl:attribute name="ID">DMD_file0<xsl:value-of select="position()"/></xsl:attribute>
+					<xsl:attribute name="ID">DMD_element0<xsl:value-of select="position()"/></xsl:attribute>
 					<mods:titleInfo>
 						<xsl:copy-of select="."/> 
 					</mods:titleInfo>
 				</mods:relatedItem>
 			</xsl:for-each>
-		</xsl:if>	
+		</xsl:if>	 -->
 	
 		<xsl:for-each select="Contents">
 			<mods:relatedItem type="constituent">
-				<mods:titleInfo><xsl:value-of select='.'/></mods:titleInfo>
+				<mods:titleInfo>
+					<mods:title><xsl:value-of select='.'/></mods:title>
+				</mods:titleInfo>
 			</mods:relatedItem>
 		</xsl:for-each>
 				
@@ -429,7 +431,7 @@
 
 	<xsl:template name="tokenize">
 		<xsl:param name="pText" select="."/>
-		<xsl:variable name="delimiter" select="'&lt;br/&gt;'"/>		
+		<xsl:variable name="delimiter" select="'&lt;br&gt;'"/>		
 		<xsl:if test="string-length($pText) >0">
 			<mods:titleInfo>
 				<mods:title>

@@ -14,9 +14,9 @@
 		<doc>
 			<xsl:apply-templates select="mods:identifier[@type = 'local']"/>
 			<xsl:apply-templates select="mods:titleInfo"/>
-			<xsl:apply-templates select="mods:name"/>
-			<xsl:apply-templates select="mods:note[@type = 'statement of responsibility']"/>
-			<xsl:apply-templates select="mods:language"/>
+			<!-- <xsl:apply-templates select="mods:name"/> -->
+			<!-- <xsl:apply-templates select="mods:note[@type = 'statement of responsibility']"/> -->
+<!-- 			<xsl:apply-templates select="mods:language"/>
 			<xsl:apply-templates select="mods:subject/mods:topic"/>
 			<xsl:apply-templates select="mods:subject/mods:geographic"/>
 			<xsl:apply-templates select="mods:originInfo[@eventType = 'publication']"/>
@@ -25,10 +25,12 @@
 			<xsl:apply-templates select="mods:physicalDescription/mods:extent"/>
 			<xsl:apply-templates select="mods:physicalDescription/mods:note[@type = 'running-time']"/>
 			<xsl:apply-templates select="mods:accessCondition"/>
-			<xsl:apply-templates select="mods:genre"/>
+			<xsl:apply-templates select="mods:genre"/> -->
 <!--			<xsl:apply-templates select="mods:tableOfContents"/>-->
-			<xsl:apply-templates select="mods:relatedItem[@displayLabel='Collection']/mods:titleInfo/mods:title"/>
+			<!-- <xsl:apply-templates select="mods:relatedItem[@displayLabel='Collection']/mods:titleInfo/mods:title"/> -->
 			<xsl:apply-templates select="mods:relatedItem[@type='constituent']/mods:titleInfo/mods:title"/>
+			<!-- <xsl:apply-templates select="mods:location/mods:holdingSimple/mods:shelfLocator"/> -->
+			<!-- <xsl:apply-templates select="mods:location/mods:url"/> -->
 		</doc>
 	</xsl:template>
 
@@ -36,6 +38,9 @@
 		<xsl:if test="starts-with(., 'CID-')">
 			<field name="id">itma:cid:<xsl:value-of select="substring-after(., 'CID-')"/></field>
 		</xsl:if>
+		<xsl:if test="not(starts-with(., 'CID-'))">
+			<field name="itma_reference_display"><xsl:value-of select="."/></field>
+		</xsl:if>		
 	</xsl:template>
 
 	<xsl:template match="mods:titleInfo[@type='alternative']">
@@ -56,6 +61,11 @@
 
 	<xsl:template match="mods:name">
 		<xsl:if test="./mods:namePart[@type]">
+			<field name="people_display">
+				<xsl:value-of select="./mods:namePart[@type='given']"/>
+				<xsl:text> </xsl:text>
+				<xsl:value-of select="./mods:namePart[@type='family']"/>
+			</field>			
 			<field name="people_t">
 				<xsl:value-of select="./mods:namePart[@type='given']"/>
 				<xsl:text> </xsl:text>
@@ -72,6 +82,13 @@
 	<xsl:template match="mods:note[@type = 'statement of responsibility']">
 		<field name="author_display"><xsl:value-of select="."/></field>
 		<field name="author_t"><xsl:value-of select="."/></field>
+	</xsl:template>
+
+	<xsl:template match="mods:name[mods:role]">
+		<xsl:if test="./mods:role/mods:roleTerm/text() = 'Creator'">
+			<field name="author_display"><xsl:value-of select="./mods:namePart"/></field>
+			<field name="author_t"><xsl:value-of select="./mods:namePart"/></field>
+		</xsl:if>
 	</xsl:template>
 
 	<xsl:template match="mods:language">
@@ -103,7 +120,7 @@
 			<xsl:choose>
 				<xsl:when test="substring-before(.,'-')">
 					<field name="pub_date"><xsl:value-of select="substring-before(.,'-')"/></field>
-					<field name="pub_date_sort"><xsl:value-of select="substring-before(.,'-')"/></field>
+					<field name="pub_date_sort"><xsl:value-of select="number(substring-before(.,'-'))"/></field>
 				</xsl:when>
 				<xsl:otherwise>
 					<field name="pub_date"><xsl:value-of select="."/></field>
@@ -186,6 +203,11 @@
 		<!-- Use this facet to	facet items in archive and not in archive	-->
 		<field name="archive_location_facet"></field>
 		<field name="archive_location_display"><xsl:value-of select="."/></field>
+	</xsl:template>
+
+	<xsl:template match="mods:location/mods:url">
+		<field name="object_url_display"><xsl:value-of select="."/></field>
+		<field name="digitized_facet">Digitized</field>
 	</xsl:template>
 
 </xsl:stylesheet>
