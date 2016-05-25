@@ -17,7 +17,7 @@ for carrier in carriers:
 
 		for i,record in enumerate(record_xml.iterchildren()):
 			elements.append(record)
-			if i == 99:break
+			# if i == 99:break
 
 		transformed_record = transform(elements)
 		transformed_record.write(os.path.join(output_dir,'itma.mods.test.%s.xml') % carrier['media'],encoding='UTF-8',pretty_print=True)

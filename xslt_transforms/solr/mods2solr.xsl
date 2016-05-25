@@ -14,9 +14,9 @@
 		<doc>
 			<xsl:apply-templates select="mods:identifier[@type = 'local']"/>
 			<xsl:apply-templates select="mods:titleInfo"/>
-			<!-- <xsl:apply-templates select="mods:name"/> -->
-			<!-- <xsl:apply-templates select="mods:note[@type = 'statement of responsibility']"/> -->
-<!-- 			<xsl:apply-templates select="mods:language"/>
+			<xsl:apply-templates select="mods:name"/>
+			<xsl:apply-templates select="mods:note[@type = 'statement of responsibility']"/>
+			<xsl:apply-templates select="mods:language"/>
 			<xsl:apply-templates select="mods:subject/mods:topic"/>
 			<xsl:apply-templates select="mods:subject/mods:geographic"/>
 			<xsl:apply-templates select="mods:originInfo[@eventType = 'publication']"/>
@@ -25,12 +25,12 @@
 			<xsl:apply-templates select="mods:physicalDescription/mods:extent"/>
 			<xsl:apply-templates select="mods:physicalDescription/mods:note[@type = 'running-time']"/>
 			<xsl:apply-templates select="mods:accessCondition"/>
-			<xsl:apply-templates select="mods:genre"/> -->
-<!--			<xsl:apply-templates select="mods:tableOfContents"/>-->
-			<!-- <xsl:apply-templates select="mods:relatedItem[@displayLabel='Collection']/mods:titleInfo/mods:title"/> -->
+			<xsl:apply-templates select="mods:genre"/>
+			<xsl:apply-templates select="mods:tableOfContents"/>
+			<xsl:apply-templates select="mods:relatedItem[@displayLabel='Collection']/mods:titleInfo/mods:title"/>
 			<xsl:apply-templates select="mods:relatedItem[@type='constituent']/mods:titleInfo/mods:title"/>
-			<!-- <xsl:apply-templates select="mods:location/mods:holdingSimple/mods:shelfLocator"/> -->
-			<!-- <xsl:apply-templates select="mods:location/mods:url"/> -->
+			<xsl:apply-templates select="mods:location/mods:holdingSimple/mods:shelfLocator"/>
+			<xsl:apply-templates select="mods:location/mods:url"/>
 		</doc>
 	</xsl:template>
 

@@ -15,7 +15,6 @@ all_records = etree.Element("{%s}modsCollection"%MODS)
 
 for item in parsed_data:
 	records = item.xpath("//mods:mods",namespaces={'mods':MODS})
-	print len(records)
 	for r in records:
 		all_records.append(r)
 		# if len(all_records) >= 20:break
