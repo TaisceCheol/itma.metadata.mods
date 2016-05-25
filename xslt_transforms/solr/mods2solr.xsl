@@ -28,7 +28,7 @@
 			<xsl:apply-templates select="mods:genre"/>
 			<xsl:apply-templates select="mods:tableOfContents"/>
 			<xsl:apply-templates select="mods:relatedItem[@displayLabel='Collection']/mods:titleInfo/mods:title"/>
-			<xsl:apply-templates select="mods:relatedItem[@type='constituent']/mods:titleInfo/mods:title"/>
+			<xsl:apply-templates select="mods:relatedItem[@type='constituent' and not(@ID)]/mods:titleInfo/mods:title"/>
 			<xsl:apply-templates select="mods:location/mods:holdingSimple/mods:shelfLocator"/>
 			<xsl:apply-templates select="mods:location/mods:url"/>
 		</doc>
