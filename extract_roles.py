@@ -1,6 +1,9 @@
-import csv,re,difflib
+import csv,re,difflib,timeit
 from lxml import etree
 from glob import glob 
+from fuzzywuzzy import process as fuzzyproc
+
+start = timeit.timeit()
 
 def remove_with_funny_characters(x):
 	if len(x) > 1 and len(x.split()) > 1 and x.find('=') == -1 and x.find('?') == -1:
@@ -31,18 +34,28 @@ def main_parse(record):
 		if item in roles:
 			data['role'].append(item)
 			remove.append(item)
+		# composer is a role... keep track info with role
+		elif item.find('composer') != -1:
+			data['role'].append(item)
+			remove.append(item)
+
 		if item in locations:
 			data['locations'].append(item)
 			remove.append(item)
+
 	for item in remove:
 		record = record.replace(item,'').replace(',','')
 	name_record = record.split()
 	name_record.reverse()
 	name_record = " ".join(name_record)
-	data['name'] = difflib.get_close_matches(name_record,people,1)
+	# data['name'] = difflib.get_close_matches(name_record,people,1)
+	fuzzy_match = fuzzyproc.extractOne(name_record,people)
+	if fuzzy_match[-1] > 90:
+		data['name'] = fuzzy_match[0]
 	if len(data['name']) == 0:
 		data['name'] = record.strip()
 	return data
+
 
 records = [etree.parse(x) for x in glob('record_groups/**/**.xml')[10:11]]
 
@@ -64,10 +77,17 @@ locations = list(set(locations))
 
 extracted_entities = []
 
+count = 0
+
 for group in records:
 	for r in group.xpath('/recordlist/record'):
 		# print etree.tostring(r,pretty_print=True)
-		refno = r.xpath('ITMAReference/text()')[0]
+		refno = r.xpath('ITMAReference/text()')
+		if len(refno) == 0:
+			refno = r.attrib['CID']
+		else:
+			refno = refno[0]
+		print 'Processing: %s' % refno
 		creators = r.xpath('Creator/text()')
 		contributors = r.xpath('Contributors/text()')
 		creators = [main_parse(x) for x in creators]
@@ -76,15 +96,17 @@ for group in records:
 			x['REFNO'] = refno 
 			x['TYPE'] = 'CREATOR'
 			extracted_entities.append(x)			
+			count += 1
+
 		for x in contributors:
 			x['REFNO'] = refno
 			x['TYPE'] = 'CONTRIBUTOR'
 			extracted_entities.append(x)
-		if len(extracted_entities) > 500:
-			break
+			count += 1
 
-with open('itma.roles.test.csv','w') as f:
-	writer = csv.writer(f,delimiter=',')
-	writer.writerow(["REFNO","TYPE","NAME","ROLE","LOCATION"])
-	for p in extracted_entities:
-		writer.writerow([p['REFNO'],p['TYPE'],"".join(p['name']).encode('UTF-8')," | ".join(p['role']).encode('UTF-8'),p['locations']])
+print timeit.timeit() - start
+# with open('itma.roles.csv','w') as f:
+# 	writer = csv.writer(f,delimiter=',')
+# 	writer.writerow(["REFNO","TYPE","NAME","ROLE","LOCATION"])
+# 	for p in extracted_entities:
+# 		writer.writerow([p['REFNO'],p['TYPE'],"".join(p['name']).encode('UTF-8')," | ".join(p['role']).encode('UTF-8'),p['locations'].encode('UTF-8')])
