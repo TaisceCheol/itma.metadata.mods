@@ -106,11 +106,10 @@ role_list = etree.Element("NamedRoles")
 
 recordlist = records.xpath('/recordlist/record')
 
-with click.progressbar(recordlist,label="Extracting roles...",length=20) as bar:
+with click.progressbar(recordlist,label="Extracting roles...") as bar:
 	for r in bar:
 		extracted_entities = []
 		refno = r.xpath('ITMAReference/text()')
-		print refno
 		if len(refno) == 0:
 			refno = r.attrib['CID']
 		else:
@@ -126,7 +125,6 @@ with click.progressbar(recordlist,label="Extracting roles...",length=20) as bar:
 		extracted_entities = join_same_name(extracted_entities)
 		xml_records = [format_as_xml(x) for x in extracted_entities]
 		for el in xml_records:
-			# print el
 			role_list.append(el)
 
 etree.ElementTree(role_list).write("itma.roles.xml",pretty_print=True)
