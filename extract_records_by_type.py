@@ -1,8 +1,6 @@
 import re,subprocess
 from lxml import etree
-# from dateutil.parser import parse as parse
 from dateparser import parse,date
-# from datetime import date
 
 def parse_materials(tree):
 	types = ['Sound Recording','Image','Printed Material','Serial Issue','Video','Copy']
@@ -105,6 +103,23 @@ def parse_image_carriers(tree,carrier):
 	[element_list.append(x) for x in elements]
 	return etree.ElementTree(element_list).xpath("/recordlist/record[%s]" % starts_with_strings)
 
+def process_roles(el):
+	# get refno
+	refno = el.find("ITMAReference")
+	if refno != None:
+		refno = el.attrib['CID']
+	else:
+		refno = refno.text
+	# get info from roles authority
+	
+	# append these elements back into this record
+	new_el = etree.Element("Creator")
+	name = etree.SubElement(new_el,"Name")
+	name.text = "Piaras Hoban"
+	role = etree.SubElement(new_el,"Role")
+	role.text = "Guitar"
+	el.append(new_el)
+
 def parse_video_carriers(tree,carrier):
 	audio_carriers = {}
 	carriers = {}
@@ -113,7 +128,12 @@ def parse_video_carriers(tree,carrier):
 	element_list = etree.Element("recordlist")
 	elements = tree.xpath("/recordlist/record[DocType[text() = 'Video']]")
 	[element_list.append(x) for x in elements]
+	[process_roles(x) for x in elements]
 	return etree.ElementTree(element_list).xpath("/recordlist/record[%s]" % starts_with_strings)
+
+roles = "itma.roles.xml"
+
+roles = etree.parse(roles)
 
 src = "itma.cat.soutron_20160216.xml"
 
