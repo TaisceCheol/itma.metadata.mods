@@ -104,21 +104,18 @@ def parse_image_carriers(tree,carrier):
 	return etree.ElementTree(element_list).xpath("/recordlist/record[%s]" % starts_with_strings)
 
 def process_roles(el):
+	global roles
 	# get refno
 	refno = el.find("ITMAReference")
-	if refno != None:
+	if refno == None:
 		refno = el.attrib['CID']
 	else:
 		refno = refno.text
 	# get info from roles authority
-	
+	id_matches = roles.xpath('/NamedRoles/*[@id="%s"]' % refno)
 	# append these elements back into this record
-	new_el = etree.Element("Creator")
-	name = etree.SubElement(new_el,"Name")
-	name.text = "Piaras Hoban"
-	role = etree.SubElement(new_el,"Role")
-	role.text = "Guitar"
-	el.append(new_el)
+	for item in id_matches:
+		el.append(item)
 
 def parse_video_carriers(tree,carrier):
 	audio_carriers = {}

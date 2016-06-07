@@ -68,7 +68,7 @@ def join_same_name(data):
 	return store.values()
 
 def format_as_xml(obj):
-	el = etree.Element(obj['TYPE'].title())
+	el = etree.Element("NamedRole",type=obj['TYPE'].lower())
 	el.attrib['id'] = obj['REFNO']
 	name = etree.SubElement(el,'Name')
 	name.text = obj['name']
