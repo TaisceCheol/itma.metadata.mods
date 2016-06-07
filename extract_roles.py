@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import csv,re,difflib,timeit
 from lxml import etree
 from glob import glob 
@@ -38,26 +39,25 @@ def main_parse(record):
 		elif item.find('composer') != -1:
 			data['role'].append(item)
 			remove.append(item)
-
 		if item in locations:
 			data['locations'].append(item)
 			remove.append(item)
-
 	for item in remove:
 		record = record.replace(item,'').replace(',','')
 	name_record = record.split()
 	name_record.reverse()
 	name_record = " ".join(name_record)
+	data['name'] = name_record
 	# data['name'] = difflib.get_close_matches(name_record,people,1)
-	fuzzy_match = fuzzyproc.extractOne(name_record,people)
-	if fuzzy_match[-1] > 90:
-		data['name'] = fuzzy_match[0]
+	# fuzzy_match = fuzzyproc.extractOne(name_record,people)
+	# if fuzzy_match[-1] > 90:
+	# 	data['name'] = fuzzy_match[0]
 	if len(data['name']) == 0:
 		data['name'] = record.strip()
 	return data
 
 
-records = [etree.parse(x) for x in glob('record_groups/**/**.xml')[10:11]]
+records = [etree.parse(x) for x in glob('record_groups/**/**.xml')]
 
 refnos = []
 roles = []
@@ -67,20 +67,29 @@ locations = []
 
 for r in records:
 	[cfields.append(p) for p in r.xpath('/recordlist/record/*[self::Creator or self::Contributors]')]
-	[people.append(p) for p in r.xpath('/recordlist/record/People/text()')]
+	# [people.append(p) for p in r.xpath('/recordlist/record/People/text()')]
 	[locations.append(p) for p in r.xpath('/recordlist/record/GeographicalLocation/text()')]
 
 for c in cfields:parse_roles(c.text)
+
 roles = sorted(list(set(roles)))
-people = filter(remove_with_funny_characters,sorted(list(set(people)),key=lambda x:x.split()[-1]))
 locations = list(set(locations))
+
+# people = filter(remove_with_funny_characters,sorted(list(set(people)),key=lambda x:x.split()[-1]))
+
+# with open('itma.people.csv','w') as f:
+# 	writer = csv.writer(f,delimiter=',')
+# 	writer.writerow(["ID","NAME"])
+# 	for i,p in enumerate(people):
+# 		writer.writerow([i,p.encode('UTF-8')])
+
 
 extracted_entities = []
 
 count = 0
 
 for group in records:
-	for r in group.xpath('/recordlist/record'):
+	for i,r in enumerate(group.xpath('/recordlist/record')):
 		# print etree.tostring(r,pretty_print=True)
 		refno = r.xpath('ITMAReference/text()')
 		if len(refno) == 0:
@@ -104,9 +113,17 @@ for group in records:
 			extracted_entities.append(x)
 			count += 1
 
-print timeit.timeit() - start
-# with open('itma.roles.csv','w') as f:
-# 	writer = csv.writer(f,delimiter=',')
-# 	writer.writerow(["REFNO","TYPE","NAME","ROLE","LOCATION"])
-# 	for p in extracted_entities:
-# 		writer.writerow([p['REFNO'],p['TYPE'],"".join(p['name']).encode('UTF-8')," | ".join(p['role']).encode('UTF-8'),p['locations'].encode('UTF-8')])
+with open('itma.roles.csv','w') as f:
+	writer = csv.writer(f,delimiter=',')
+	writer.writerow(["REFNO","TYPE","NAME","ROLE","LOCATION"])
+	for p in extracted_entities:
+		row = [p['REFNO'].encode('UTF-8'),p['TYPE'],p['name'].encode('UTF-8'),[x.encode('UTF-8') for x in p['role']],[x.encode('UTF-8') for x in p['locations']]]
+		print [row]
+		writer.writerow(row)
+
+
+
+
+
+
+
