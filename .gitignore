@@ -1,4 +1,6 @@
 *.xml
+*.json
+
 # Compiled source #
 ###################
 *.com
