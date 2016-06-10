@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # import csv,re,difflib,timeit
-import csv,click
-import regex as re
+import csv,click,re
 from lxml import etree
 from glob import glob 
 from fuzzywuzzy import process as fuzzyproc
@@ -24,39 +23,38 @@ def prepare_roles(value):
 	newvalue = re.sub("(?:\d|\=|\?|\[|\]|\)|\(|A|B|\/|\-)","",newvalue)
 	return newvalue.strip()
 
-def proces_regex(compiled_re,string):
-	matches = compiled_re.findall(string)
-	if len(matches):
-		return list(filter(lambda x:len(x)>1,matches[0]))
-	else:
-		return []
 
 def main_parse(record,REFNO,TYPE,people):
-	global role_re,locations_re,cache
+	global roles,locations,cache
 	if "Unidentified" not in people:
 		people.append("Unidentified")
 	record = record.replace('=','')
 	data = {'name':[],'role':[],'locations':[],'tracks':[],'TYPE':TYPE,'REFNO':REFNO}	
+
 	if record in cache.keys():
+		# print 'Found cached record: %s' % record
 		data['name'] = cache[record]['name']
 		data['role'] = cache[record]['role']
 		data['locations'] = cache[record]['locations']
 		data['tracks'] = cache[record]['tracks']
-	else:
-		roles = proces_regex(role_re,record)
-		locations = proces_regex(locations_re,record)
-		track = re.compile('((?:A|B)\d+)')
-		tracks = track.findall(record)
-		clean_record = record
-		for item in [roles,locations,tracks]:
-			for value in item:
-				clean_record = clean_record.replace(value,'')
-		data['role'] = roles 
-		data['locations'] = locations
-		data['tracks'] = tracks
-		if len(people):
-			data['name'] = fuzzyproc.extractOne(clean_record,people)[0]
+	elif len(people):
+		data['name'] = fuzzyproc.extractOne(record,people)[0]
+		tracks = re.findall('((?:A|B)\d+(\,*\s*(?:A|B)*\d+)*)',record)
+		if len(tracks):
+			for y in tracks[0][0].split(','):
+				data['tracks'].append(y.strip())
+			record = record.replace(tracks[0][0],'').strip()
+		tokens = filter(lambda x: x not in data['name'].split(),[y.strip() for y in record.split(',')])
+		for item in tokens:
+			if item in roles:
+				data['role'].append(item)
+			elif item in locations:
+				data['locations'].append(item)
 		cache[record] = data
+		# print 'Caching record: %s' % record
+	else:
+		# print 'Caching record: %s' % record
+		cache[record] = data		
 	return data
 
 def join_same_name(data):
@@ -102,10 +100,6 @@ for c in cfields:parse_roles(c.text)
 
 roles = list(set([x.replace('\n','').strip() for x in filter(lambda x:len(x) > 1,roles)]))
 locations = list(set(locations))
-role_re = re.compile(ur"(?:%s)" % "|".join(ur"(\b%s\b)" % re.escape(x) for x in roles))
-locations_re = re.compile("(?:%s)" % ur"|".join([ur"(\b%s\b)" % re.escape(x) for x in locations]))
-
-count = 0
 
 role_list = etree.Element("NamedRoles")
 
@@ -130,7 +124,6 @@ with click.progressbar(recordlist,label="Extracting roles...") as bar:
 		for x in creators + contributors:
 			if len(x['role']):
 				extracted_entities.append(x)
-				count += 1
 		extracted_entities = join_same_name(extracted_entities)
 		xml_records = [format_as_xml(x) for x in extracted_entities]
 		for el in xml_records:

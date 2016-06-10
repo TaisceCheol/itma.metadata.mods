@@ -129,7 +129,7 @@ term_lookup = {}
 
 failed = []
 
-with click.progressbar(roles.xpath('//NamedRole')) as bar:
+with click.progressbar(roles.xpath('//NamedRole'),label="Linking to authoritie files...") as bar:
 	for el in bar:
 		value = el.xpath('Role/text()')
 		if len(value):
