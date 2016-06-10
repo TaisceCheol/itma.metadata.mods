@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # import csv,re,difflib,timeit
-import csv,re,click
+import csv,click
+import regex as re
 from lxml import etree
 from glob import glob 
 from fuzzywuzzy import process as fuzzyproc
@@ -20,49 +21,54 @@ def prepare_roles(value):
 	newvalue = value.strip()
 	newvalue = re.sub("[A-Za-z]\d","",newvalue)
 	newvalue = re.split("(.*)\son\s.*",newvalue)[0]
-	newvalue = re.sub("(?:\d|\=|\?|\[|\]|\)|\(|A|B|\/)","",newvalue)
+	newvalue = re.sub("(?:\d|\=|\?|\[|\]|\)|\(|A|B|\/|\-)","",newvalue)
 	return newvalue.strip()
 
-def main_parse(record,REFNO,TYPE):
-	global roles,locations,people
+def proces_regex(compiled_re,string):
+	matches = compiled_re.findall(string)
+	if len(matches):
+		return list(filter(lambda x:len(x)>1,matches[0]))
+	else:
+		return []
+
+def main_parse(record,REFNO,TYPE,people):
+	global role_re,locations_re,cache
+	if "Unidentified" not in people:
+		people.append("Unidentified")
 	record = record.replace('=','')
-	tokenize = record.split(',')
-	tokenize = [x.strip() for x in tokenize]
-	data = {'name':[],'role':[],'locations':[],'TYPE':TYPE,'REFNO':REFNO}
-	remove = []
-	for item in tokenize:
-		if item in roles:
-			data['role'].append(item)
-			remove.append(item)
-		# composer is a role... keep track info with role
-		elif item.find('composer') != -1:
-			data['role'].append(item)
-			remove.append(item)
-		if item in locations:
-			data['locations'].append(item)
-			remove.append(item)
-	for item in remove:
-		record = record.replace(item,'').replace(',','')
-	name_record = record.split()
-	name_record.reverse()
-	name_record = " ".join(name_record)
-	data['name'] = name_record
-	# data['name'] = difflib.get_close_matches(name_record,people,1)
-	# fuzzy_match = fuzzyproc.extractOne(name_record,people)
-	# if fuzzy_match[-1] > 90:
-	# 	data['name'] = fuzzy_match[0]
-	if len(data['name']) == 0:
-		data['name'] = record.strip()
+	data = {'name':[],'role':[],'locations':[],'tracks':[],'TYPE':TYPE,'REFNO':REFNO}	
+	if record in cache.keys():
+		data['name'] = cache[record]['name']
+		data['role'] = cache[record]['role']
+		data['locations'] = cache[record]['locations']
+		data['tracks'] = cache[record]['tracks']
+	else:
+		roles = proces_regex(role_re,record)
+		locations = proces_regex(locations_re,record)
+		track = re.compile('((?:A|B)\d+)')
+		tracks = track.findall(record)
+		clean_record = record
+		for item in [roles,locations,tracks]:
+			for value in item:
+				clean_record = clean_record.replace(value,'')
+		data['role'] = roles 
+		data['locations'] = locations
+		data['tracks'] = tracks
+		if len(people):
+			data['name'] = fuzzyproc.extractOne(clean_record,people)[0]
+		cache[record] = data
 	return data
 
 def join_same_name(data):
 	store = {}
 	for item in data:
-		if item['name'] in store.keys():
+		if item['name'] in store.keys() and not isinstance(item['name'],list):
 			store[item['name']]['role'] += item['role']
 			store[item['name']]['role'] = list(set(store[item['name']]['role']))
 			store[item['name']]['locations'] += item['locations']
 			store[item['name']]['locations'] = list(set(store[item['name']]['locations']))
+		elif isinstance(item['name'],list):
+			pass
 		else:
 			store[item['name']] = item
 	return store.values()
@@ -86,19 +92,18 @@ records = etree.parse(src)
 
 refnos = []
 roles = []
-people = []
 cfields = []
 locations = []
 
-
 [cfields.append(p) for p in records.xpath('/recordlist/record/*[self::Creator or self::Contributors]')]
-# [people.append(p) for p in r.xpath('/recordlist/record/People/text()')]
 [locations.append(p) for p in records.xpath('/recordlist/record/GeographicalLocation/text()')]
 
 for c in cfields:parse_roles(c.text)
 
-roles = sorted(list(set(roles)))
+roles = list(set([x.replace('\n','').strip() for x in filter(lambda x:len(x) > 1,roles)]))
 locations = list(set(locations))
+role_re = re.compile(ur"(?:%s)" % "|".join(ur"(\b%s\b)" % re.escape(x) for x in roles))
+locations_re = re.compile("(?:%s)" % ur"|".join([ur"(\b%s\b)" % re.escape(x) for x in locations]))
 
 count = 0
 
@@ -106,18 +111,22 @@ role_list = etree.Element("NamedRoles")
 
 recordlist = records.xpath('/recordlist/record')
 
+cache = {}
+
 with click.progressbar(recordlist,label="Extracting roles...") as bar:
 	for r in bar:
+	# for r in recordlist:
 		extracted_entities = []
 		refno = r.xpath('ITMAReference/text()')
 		if len(refno) == 0:
 			refno = r.attrib['CID']
 		else:
 			refno = refno[0]
+		people = list(set(r.xpath('People/text()')))
 		creators = set(r.xpath('Creator/text()'))
 		contributors = set(r.xpath('Contributors/text()'))
-		creators = [main_parse(x,refno,'CREATOR') for x in creators]
-		contributors = [main_parse(x,refno,'CONTRIBUTOR') for x in contributors]
+		creators = [main_parse(x,refno,'CREATOR',people) for x in creators]
+		contributors = [main_parse(x,refno,'CONTRIBUTOR',people) for x in contributors]
 		for x in creators + contributors:
 			if len(x['role']):
 				extracted_entities.append(x)

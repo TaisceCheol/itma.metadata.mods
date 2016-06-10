@@ -127,15 +127,17 @@ linked_roles = {}
 
 term_lookup = {}
 
+failed = []
+
 with click.progressbar(roles.xpath('//NamedRole')) as bar:
 	for el in bar:
 		value = el.xpath('Role/text()')
 		if len(value):
 			value = value[0]
-			if value not in linked_roles.keys():
+			if value not in linked_roles.keys() and value not in failed:
 				# check relators first
 				result = process.extract(value,relators,limit=1)
-				if len(result) and result[0][-1] > 90:
+				if len(result) and result[0][-1] > 95:
 					if result[0][0] not in linked_roles.keys():
 						# print value,result[0][0]
 						linked_roles[result[0][0]] = get_single_relator(result[0][0])
@@ -143,20 +145,22 @@ with click.progressbar(roles.xpath('//NamedRole')) as bar:
 				else:
 					# then instruments			
 					result = process.extract(value,instruments,limit=1)
-					if len(result) and result[0][-1] > 90:
+					if len(result) and result[0][-1] > 95:
 						if result[0][0] not in linked_roles.keys():
 							# print value,result[0][0]
 							linked_roles[result[0][0]] = get_single_instrument(result[0][0])
 							term_lookup[value] = result[0][0]
 					else:
-						try:
-							aat = get_aat_term(value)
-							if len(aat) != 0:
-								# print value,aat[0]['label']['value']
-								linked_roles[value] = aat
-								term_lookup[value] = result[0][0]
-						except:
-							print 'Failed to link term: %s' % value
+						failed.append(value)
+					# 	try:
+					# 		aat = get_aat_term(value)
+					# 		if len(aat) != 0:
+					# 			# print value,aat[0]['label']['value']
+					# 			linked_roles[value] = aat
+					# 			term_lookup[value] = result[0][0]
+					# 	except:
+						# print 'Failed to link term: %s' % value
+
 
 linked_roles['term_lookup'] = term_lookup
 
