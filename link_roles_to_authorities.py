@@ -42,6 +42,8 @@ def get_aat_term(item):
 			?entity a skos:Concept ;
 				skos:inScheme ?source ;
 				rdfs:label "%s"@en ;
+				gvp:prefLabelGVP ?prefterm	.
+			?prefterm gvp:term ?label			
 	    }
 	""" % item)
 	sparql.setReturnFormat(JSON)
@@ -72,10 +74,10 @@ def get_single_instrument(rel):
 	sparql.setQuery("""
 		PREFIX madsrdf: <http://www.loc.gov/mads/rdf/v1#>
 		PREFIX skos: <http://www.w3.org/2004/02/skos/core#> 		
-	    SELECT ?entity ?instrument ?source
+	    SELECT ?entity ?label ?source
 	    WHERE { 
 			?entity madsrdf:authoritativeLabel "%s"@en ;
-					madsrdf:authoritativeLabel ?instrument ;
+					madsrdf:authoritativeLabel ?label ;
 					skos:inScheme ?source ;
 
 	    }
@@ -103,11 +105,11 @@ def get_single_relator(rel):
 	sparql = SPARQLWrapper("http://localhost:8090/sparql")
 	sparql.setQuery("""
 		PREFIX madsrdf: <http://www.loc.gov/mads/rdf/v1#>
-	    SELECT ?entity ?code ?relator ?source
+	    SELECT ?entity ?code ?label ?source
 	    WHERE { 
 			?entity madsrdf:authoritativeLabel "%s"@en ;
 					madsrdf:code ?code ;
-					madsrdf:authoritativeLabel ?relator ;
+					madsrdf:authoritativeLabel ?label ;
 					madsrdf:isMemberOfMADSScheme ?source
 
 	    }
@@ -129,8 +131,8 @@ term_lookup = {}
 
 failed = []
 
-with click.progressbar(roles.xpath('//NamedRole'),label="Linking to authoritie files...") as bar:
-	for el in bar:
+with click.progressbar(roles.xpath('//NamedRole'),label="Linking to authority files...") as bar:
+	for i,el in enumerate(bar):
 		value = el.xpath('Role/text()')
 		if len(value):
 			value = value[0]
@@ -151,16 +153,21 @@ with click.progressbar(roles.xpath('//NamedRole'),label="Linking to authoritie f
 							linked_roles[result[0][0]] = get_single_instrument(result[0][0])
 							term_lookup[value] = result[0][0]
 					else:
-						failed.append(value)
-					# 	try:
-					# 		aat = get_aat_term(value)
-					# 		if len(aat) != 0:
-					# 			# print value,aat[0]['label']['value']
-					# 			linked_roles[value] = aat
-					# 			term_lookup[value] = result[0][0]
-					# 	except:
-						# print 'Failed to link term: %s' % value
-
+						#then getty
+						# try:
+							aat = get_aat_term(value)
+							if len(aat) != 0:
+								# print value,aat
+								linked_roles[value] = aat
+								term_lookup[value] = result[0][0]
+							else:
+								failed.append(value)
+								print 'Failed to link term: %s' % value								
+						# except:
+							# failed.append(value)
+							# print 'Failed to link term: %s' % value
+		if i > 250:
+			quit()
 
 linked_roles['term_lookup'] = term_lookup
 
