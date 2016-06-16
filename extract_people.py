@@ -24,6 +24,7 @@ people = []
 for r in records:
 	[people.append(p) for p in r.xpath('/recordlist/record/People/text()')]
 
+# remove zero length
 people = filter(lambda x:len(x) > 1,map(clean_string,list(set(people))))
 # sorted by first name
 people = sorted(people,key=lambda x:x.split()[0])

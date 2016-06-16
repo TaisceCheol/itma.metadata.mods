@@ -31,10 +31,10 @@ def main_parse(record,REFNO,TYPE,people):
 	record = record.replace('=','')
 	data = {'name':[],'role':[],'locations':[],'tracks':[],'TYPE':TYPE,'REFNO':REFNO}	
 
-	if record in cache.keys():
+        if record in cache.keys():
 		# print 'Found cached record: %s' % record
-		data['name'] = cache[record]['name']
-		data['role'] = cache[record]['role']
+                data['name'] = cache[record]['name']
+                data['role'] = cache[record]['role']
 		data['locations'] = cache[record]['locations']
 		data['tracks'] = cache[record]['tracks']
 	elif len(people):
@@ -106,7 +106,7 @@ role_list = etree.Element("NamedRoles")
 recordlist = records.xpath('/recordlist/record')
 
 cache = {}
-
+c = 0
 with click.progressbar(recordlist,label="Extracting roles...") as bar:
 	for r in bar:
 	# for r in recordlist:
@@ -128,7 +128,9 @@ with click.progressbar(recordlist,label="Extracting roles...") as bar:
 		xml_records = [format_as_xml(x) for x in extracted_entities]
 		for el in xml_records:
 			role_list.append(el)
-
+			c += 1
+#		if c > 25: break
+	
 etree.ElementTree(role_list).write("itma.roles.xml",pretty_print=True)
 
 # with open('itma.roles.csv','w') as f:
