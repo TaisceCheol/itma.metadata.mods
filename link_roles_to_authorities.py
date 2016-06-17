@@ -34,6 +34,23 @@ def get_single_carrier(carrier):
 	return results['results']['bindings'][0]
 
 def get_aat_term(item):
+	sparql = SPARQLWrapper("http://localhost:8097/sparql")
+	sparql.setQuery("""
+		#don't need prefixes for online?
+	    SELECT ?label ?entity ?source
+	    WHERE { 
+			?entity a skos:Concept ;
+				skos:inScheme ?source ;
+				rdfs:label "%s"@en ;
+				gvp:prefLabelGVP ?prefterm	.
+			?prefterm gvp:term ?label			
+	    }
+	""" % item)
+	sparql.setReturnFormat(JSON)
+	results = sparql.query().convert()
+	return results['results']['bindings']
+
+def get_aat_term(item):
 	sparql = SPARQLWrapper("http://vocab.getty.edu/sparql")
 	sparql.setQuery("""
 		#don't need prefixes for online?

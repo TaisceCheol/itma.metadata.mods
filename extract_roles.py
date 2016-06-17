@@ -24,7 +24,7 @@ def prepare_roles(value):
 	return newvalue.strip()
 
 
-def main_parse(record,REFNO,TYPE,people):
+def main_parser(record,REFNO,TYPE,people):
 	global roles,locations,cache
 	if "Unidentified" not in people:
 		people.append("Unidentified")
@@ -55,6 +55,7 @@ def main_parse(record,REFNO,TYPE,people):
 	else:
 		# print 'Caching record: %s' % record
 		cache[record] = data		
+	data['role'] = list(set(data['role']))
 	return data
 
 def join_same_name(data):
@@ -77,10 +78,23 @@ def format_as_xml(obj):
 	name = etree.SubElement(el,'Name')
 	name.text = obj['name']
 	for role in obj['role']:
-		role_el = etree.SubElement(el,'Role')
-		role_el.text = role 
+		found_lang_el = False
+		# splits singing in Irish/English into singing/voice roles with a language term...
+		if role.find('singing') != -1:
+		 	role_el = etree.SubElement(el,'Role')
+		 	role_el.text = 'singer'
+		 	found_lang_el = True
+		if role.find('speech') != -1:
+		 	role_el = etree.SubElement(el,'Role')
+		 	role_el.text = 'voice'	
+		 	found_lang_el = True
+		if found_lang_el == False:
+			role_el = etree.SubElement(el,'Role')
+			role_el.text = role
+		else:
+			role_el = etree.SubElement(el,'Language')
+			role_el.text = role.split('in')[-1].strip()			
 	return el
-
 
 src = "itma.cat.soutron_20160216.xml"
 
@@ -119,8 +133,8 @@ with click.progressbar(recordlist,label="Extracting roles...") as bar:
 		people = list(set(r.xpath('People/text()')))
 		creators = set(r.xpath('Creator/text()'))
 		contributors = set(r.xpath('Contributors/text()'))
-		creators = [main_parse(x,refno,'CREATOR',people) for x in creators]
-		contributors = [main_parse(x,refno,'CONTRIBUTOR',people) for x in contributors]
+		creators = [main_parser(x,refno,'CREATOR',people) for x in creators]
+		contributors = [main_parser(x,refno,'CONTRIBUTOR',people) for x in contributors]
 		for x in creators + contributors:
 			if len(x['role']):
 				extracted_entities.append(x)
@@ -129,7 +143,7 @@ with click.progressbar(recordlist,label="Extracting roles...") as bar:
 		for el in xml_records:
 			role_list.append(el)
 			c += 1
-#		if c > 25: break
+		# if c > 50: break
 	
 etree.ElementTree(role_list).write("itma.roles.xml",pretty_print=True)
 
