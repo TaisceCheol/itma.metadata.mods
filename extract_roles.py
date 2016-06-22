@@ -83,17 +83,14 @@ def format_as_xml(obj):
 		if role.find('singing') != -1:
 		 	role_el = etree.SubElement(el,'Role')
 		 	role_el.text = 'singer'
-		 	found_lang_el = True
-		if role.find('speech') != -1:
+		 	role_el.attrib['lang'] = role.split('in')[-1].strip()
+		elif role.find('speech') != -1:
 		 	role_el = etree.SubElement(el,'Role')
 		 	role_el.text = 'voice'	
-		 	found_lang_el = True
-		if found_lang_el == False:
+		 	role_el.attrib['lang'] = role.split('in')[-1].strip()
+		else: 
 			role_el = etree.SubElement(el,'Role')
 			role_el.text = role
-		else:
-			role_el = etree.SubElement(el,'Language')
-			role_el.text = role.split('in')[-1].strip()			
 	return el
 
 src = "itma.cat.soutron_20160216.xml"

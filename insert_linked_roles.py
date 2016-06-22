@@ -2,6 +2,15 @@ import json,click
 from fuzzywuzzy import process
 from lxml import etree
 
+def make_instance(el):
+	obj = {}
+	obj['authorityURI'] = el.attrib['authorityURI']
+	obj['valueURI'] = el.attrib['valueURI']
+	obj['refno'] = el.attrib['id']
+	if len(el.xpath('Language/text()')):
+		obj['lang'] = el.xpath('Language/text()')[0]
+	return obj
+
 roles = etree.parse('itma.roles.xml')
 linked_role_data = etree.Element("NamedRoles")
 
@@ -10,9 +19,12 @@ with open('linked_roles_lookup.json','r') as f:
 
 missed_terms = []
 
+people_store = {'creator':{},'contributor':{}}
+
 with click.progressbar(roles.xpath('//NamedRole'),label="Linking to authority files...") as bar:
 	for el in bar:
 		value = el.xpath('Role/text()')
+		role_element = el.xpath('Role')[0]
 		if len(value):
 			for term in value:
 				if not term in linked_roles['term_lookup'].keys():
@@ -24,14 +36,18 @@ with click.progressbar(roles.xpath('//NamedRole'),label="Linking to authority fi
 						break
 				canonical_term = linked_roles['term_lookup'][term]
 				data = linked_roles[canonical_term]
-				el.attrib['authorityURI'] = data['source']['value']
-				el.attrib['valueURI'] = data['entity']['value']
-			lang = el.xpath('Language')
+				role_element.attrib['authorityURI'] = data['source']['value']
+				role_element.attrib['valueURI'] = data['entity']['value']
+				role_element.attrib['code'] = data['entity']['value'].split('/')[-1]
+				lang = el.xpath('Language')
+				if len(lang):
+					for lang_el in lang:
+						if lang_el.text:
+							role_element.attrib['lang'] = lang_el.text
 			linked_role_data.append(el)
-		
 
 etree.ElementTree(linked_role_data).write('itma.roles.linked.xml',pretty_print=True)
 
 with open('unresolved_terms.txt','w') as f:
 	for item in set(sorted(missed_terms)):
-		f.write("%\n" % term)
+		f.write("%s\n" % item.encode('utf-8'))
