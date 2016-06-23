@@ -38,3 +38,8 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+transform_to_solr.py
+parse_soutron_source.py
+extract_records_by_type.py
+
