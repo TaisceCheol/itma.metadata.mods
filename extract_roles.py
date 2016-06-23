@@ -4,6 +4,7 @@ import csv,click,re
 from lxml import etree
 from glob import glob 
 from fuzzywuzzy import process as fuzzyproc
+from multiprocessing.dummy import Pool
 
 def remove_with_funny_characters(x):
 	if len(x) > 1 and len(x.split()) > 1 and x.find('=') == -1 and x.find('?') == -1:
@@ -11,7 +12,7 @@ def remove_with_funny_characters(x):
 
 def parse_roles(record):
 	global roles
-	for x in record.split(','):
+	for x in record.text.split(','):
 		if len(x.split()) and x.split()[0].strip().islower():
 			if len(x.split()) <= 3 and x.split()[0] != 'and':
 				roles.append(prepare_roles(x))
@@ -93,6 +94,24 @@ def format_as_xml(obj):
 			role_el.text = role
 	return el
 
+def process_recordlist(record):
+	global c
+	extracted_entities = []
+	refno = record.attrib['CID']
+	people = list(set(record.xpath('People/text()')))
+	creators = set(record.xpath('Creator/text()'))
+	contributors = set(record.xpath('Contributors/text()'))
+	creators = [main_parser(x,refno,'CREATOR',people) for x in creators]
+	contributors = [main_parser(x,refno,'CONTRIBUTOR',people) for x in contributors]
+	for x in creators + contributors:
+		if len(x['role']):
+			extracted_entities.append(x)
+	extracted_entities = join_same_name(extracted_entities)
+	xml_records = [format_as_xml(x) for x in extracted_entities]
+	for el in xml_records:
+		role_list.append(el)
+		c += 1
+
 src = "itma.cat.soutron_20160216.xml"
 
 print 'Parsing XML data...'
@@ -107,7 +126,7 @@ locations = []
 [cfields.append(p) for p in records.xpath('/recordlist/record/*[self::Creator or self::Contributors]')]
 [locations.append(p) for p in records.xpath('/recordlist/record/GeographicalLocation/text()')]
 
-for c in cfields:parse_roles(c.text)
+map(parse_roles,cfields)
 
 roles = list(set([x.replace('\n','').strip() for x in filter(lambda x:len(x) > 1,roles)]))
 locations = list(set(locations))
@@ -118,43 +137,11 @@ recordlist = records.xpath('/recordlist/record')
 
 cache = {}
 c = 0
-with click.progressbar(recordlist,label="Extracting roles...") as bar:
-	for r in bar:
-	# for r in recordlist:
-		extracted_entities = []
-		refno = r.xpath('ITMAReference/text()')
-		if len(refno) == 0:
-			refno = r.attrib['CID']
-		else:
-			refno = refno[0]
-		people = list(set(r.xpath('People/text()')))
-		creators = set(r.xpath('Creator/text()'))
-		contributors = set(r.xpath('Contributors/text()'))
-		creators = [main_parser(x,refno,'CREATOR',people) for x in creators]
-		contributors = [main_parser(x,refno,'CONTRIBUTOR',people) for x in contributors]
-		for x in creators + contributors:
-			if len(x['role']):
-				extracted_entities.append(x)
-		extracted_entities = join_same_name(extracted_entities)
-		xml_records = [format_as_xml(x) for x in extracted_entities]
-		for el in xml_records:
-			role_list.append(el)
-			c += 1
-		# if c > 50: break
+
+print 'extracting roles...'
+pool = Pool(processes=4)
+pool.map(process_recordlist,recordlist)
 	
 etree.ElementTree(role_list).write("itma.roles.xml",pretty_print=True)
-
-# with open('itma.roles.csv','w') as f:
-# 	writer = csv.writer(f,delimiter=',')
-# 	writer.writerow(["REFNO","TYPE","NAME","ROLE","LOCATION"])
-# 	for p in extracted_entities:
-# 		row = [p['REFNO'].encode('UTF-8'),p['TYPE'],p['name'].encode('UTF-8'),[x.encode('UTF-8') for x in p['role']],[x.encode('UTF-8') for x in p['locations']]]
-# 		print [row]
-# 		writer.writerow(row)
-
-
-
-
-
 
 

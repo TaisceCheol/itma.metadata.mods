@@ -13,7 +13,7 @@ def process_match(item,name):
 
 def process_name(name,refno):
 	global pool
-	#print name,refno
+	print name,refno
 	match = linked_roles.xpath('/NamedRoles/NamedRole[@id="%s"][Name/text()="%s"]' % (refno,name.text))
 	if len(match):
 		name.attrib['name'] = name.text	
@@ -22,11 +22,7 @@ def process_name(name,refno):
 
 def process_record(record):
 	global linked_cat
-	record_id = record.xpath('ITMAReference/text()')
-	if len(record_id) == 0:
-		refno = record.attrib['CID']
-	else:
-		refno = record_id[0]
+	refno = record.attrib['CID']
 	people = record.xpath('People')
 	if len(people):
 		map(process_name,people,repeat(refno,len(people)))

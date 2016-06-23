@@ -2,6 +2,7 @@ import json,click
 from SPARQLWrapper import SPARQLWrapper, JSON
 from fuzzywuzzy import process
 from lxml import etree
+from multiprocessing.dummy import Pool
 
 def get_carriers():
 	sparql = SPARQLWrapper("http://localhost:8095/sparql")
@@ -136,6 +137,39 @@ def get_single_relator(rel):
 	results = sparql.query().convert()
 	return results['results']['bindings'][0]
 
+def process_role(el):
+	global linked_roles,term_lookup,failed,relators,instruments
+	value = el.xpath('Role/text()')
+	if len(value):
+		value = value[0]
+		if value not in linked_roles.keys() and value not in failed:
+			# check relators first
+			result = process.extract(value,relators,limit=1)
+			if len(result) and result[0][-1] > 95:
+				if result[0][0] not in linked_roles.keys():
+					# print value,result[0][0]
+					linked_roles[result[0][0]] = get_single_relator(result[0][0])
+					term_lookup[value] = result[0][0]
+			else:
+				# then instruments			
+				result = process.extract(value,instruments,limit=1)
+				if len(result) and result[0][-1] > 95:
+					if result[0][0] not in linked_roles.keys():
+						# print value,result[0][0]
+						linked_roles[result[0][0]] = get_single_instrument(result[0][0])
+						term_lookup[value] = result[0][0]
+				else:
+					#then getty
+					aat = get_aat_term(value)
+					if len(aat) != 0:
+						# print value,aat
+						linked_roles[value] = aat
+						term_lookup[value] = result[0][0]
+					else:
+						failed.append(value)
+						print 'Failed to link term: %s' % value								
+
+
 relators = get_relators()
 
 instruments = get_instruments()
@@ -148,44 +182,12 @@ term_lookup = {}
 
 failed = []
 
-with click.progressbar(roles.xpath('//NamedRole'),label="Linking to authority files...") as bar:
-	for i,el in enumerate(bar):
-		value = el.xpath('Role/text()')
-		if len(value):
-			value = value[0]
-			if value not in linked_roles.keys() and value not in failed:
-				# check relators first
-				result = process.extract(value,relators,limit=1)
-				if len(result) and result[0][-1] > 95:
-					if result[0][0] not in linked_roles.keys():
-						# print value,result[0][0]
-						linked_roles[result[0][0]] = get_single_relator(result[0][0])
-						term_lookup[value] = result[0][0]
-				else:
-					# then instruments			
-					result = process.extract(value,instruments,limit=1)
-					if len(result) and result[0][-1] > 95:
-						if result[0][0] not in linked_roles.keys():
-							# print value,result[0][0]
-							linked_roles[result[0][0]] = get_single_instrument(result[0][0])
-							term_lookup[value] = result[0][0]
-					else:
-						#then getty
-						# try:
-							aat = get_aat_term(value)
-							if len(aat) != 0:
-								# print value,aat
-								linked_roles[value] = aat
-								term_lookup[value] = result[0][0]
-							else:
-								failed.append(value)
-								print 'Failed to link term: %s' % value								
-						# except:
-							# failed.append(value)
-							# print 'Failed to link term: %s' % value
-		if i > 250:
-			quit()
+print 'Linkined to authority files'
+pool = Pool(processes=4)
+roles = roles.xpath('//NamedRole')
+pool.map(process_role,roles)
 
+		
 linked_roles['term_lookup'] = term_lookup
 
 with open("linked_roles_lookup.json",'w') as f:
