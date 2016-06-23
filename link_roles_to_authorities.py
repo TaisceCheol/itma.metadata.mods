@@ -70,7 +70,7 @@ def get_aat_term(item):
 
 # requires brew install redstore
 def get_instruments():
-	sparql = SPARQLWrapper("http://localhost:8080/sparql")
+	sparql = SPARQLWrapper("http://localhost:8090/sparql")
 	sparql.setQuery("""
 		PREFIX madsrdf: <http://www.loc.gov/mads/rdf/v1#>
 		PREFIX identifiers: <http://id.loc.gov/vocabulary/identifiers/>
@@ -88,7 +88,7 @@ def get_instruments():
 	return [x['instrument']['value'] for x in results['results']['bindings']]
 
 def get_single_instrument(rel):
-	sparql = SPARQLWrapper("http://localhost:8080/sparql")
+	sparql = SPARQLWrapper("http://localhost:8090/sparql")
 	sparql.setQuery("""
 		PREFIX madsrdf: <http://www.loc.gov/mads/rdf/v1#>
 		PREFIX skos: <http://www.w3.org/2004/02/skos/core#> 		
@@ -106,7 +106,7 @@ def get_single_instrument(rel):
 	return results['results']['bindings'][0]
 
 def get_relators():
-	sparql = SPARQLWrapper("http://localhost:8090/sparql")
+	sparql = SPARQLWrapper("http://localhost:8092/sparql")
 	sparql.setQuery("""
 		PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 		PREFIX madsrdf: <http://www.loc.gov/mads/rdf/v1#>
@@ -120,7 +120,7 @@ def get_relators():
 	return [x['relator']['value'] for x in results['results']['bindings']]
 
 def get_single_relator(rel):
-	sparql = SPARQLWrapper("http://localhost:8090/sparql")
+	sparql = SPARQLWrapper("http://localhost:8092/sparql")
 	sparql.setQuery("""
 		PREFIX madsrdf: <http://www.loc.gov/mads/rdf/v1#>
 	    SELECT ?entity ?code ?label ?source
@@ -160,7 +160,10 @@ def process_role(el):
 						term_lookup[value] = result[0][0]
 				else:
 					#then getty
-					aat = get_aat_term(value)
+					try:
+						aat = get_aat_term(value)
+					except:
+						aat = []
 					if len(aat) != 0:
 						# print value,aat
 						linked_roles[value] = aat
@@ -182,10 +185,9 @@ term_lookup = {}
 
 failed = []
 
-print 'Linkined to authority files'
-pool = Pool(processes=4)
+print 'Linking to authority files'
 roles = roles.xpath('//NamedRole')
-pool.map(process_role,roles)
+map(process_role,roles)
 
 		
 linked_roles['term_lookup'] = term_lookup

@@ -1,4 +1,5 @@
 import json,click
+from multiprocessing.dummy import Pool
 from fuzzywuzzy import process
 from lxml import etree
 
@@ -19,21 +20,22 @@ def process_role(el):
 		for term in value:
 			if not term in linked_roles['term_lookup'].keys():
 				nearest_term = process.extractOne(term,linked_roles['term_lookup'].keys())
-				if nearest_term[-1] > 85:
+				if nearest_term[-1] > 90:
 					term = nearest_term[0]
 				else:
 					missed_terms.append(term)
-					break
-			canonical_term = linked_roles['term_lookup'][term]
-			data = linked_roles[canonical_term]
-			role_element.attrib['authorityURI'] = data['source']['value']
-			role_element.attrib['valueURI'] = data['entity']['value']
-			role_element.attrib['code'] = data['entity']['value'].split('/')[-1]
-			lang = el.xpath('Language')
-			if len(lang):
-				for lang_el in lang:
-					if lang_el.text:
-						role_element.attrib['lang'] = lang_el.text
+					term = None
+			if term != None:
+				canonical_term = linked_roles['term_lookup'][term]
+				data = linked_roles[canonical_term]
+				role_element.attrib['authorityURI'] = data['source']['value']
+				role_element.attrib['valueURI'] = data['entity']['value']
+				role_element.attrib['code'] = data['entity']['value'].split('/')[-1]
+				lang = el.xpath('Language')
+				if len(lang):
+					for lang_el in lang:
+						if lang_el.text:
+							role_element.attrib['lang'] = lang_el.text
 		linked_role_data.append(el)
 
 roles = etree.parse('itma.roles.xml')
@@ -46,11 +48,9 @@ missed_terms = []
 
 people_store = {'creator':{},'contributor':{}}
 
-
-
-with click.progressbar(roles.xpath('//NamedRole'),label="Linking to authority files...") as bar:
-	for el in bar:
-		
+roles = roles.xpath('//NamedRole')
+pool = Pool(processes=4)
+map(process_role,roles)
 
 etree.ElementTree(linked_role_data).write('itma.roles.linked.xml',pretty_print=True)
 
