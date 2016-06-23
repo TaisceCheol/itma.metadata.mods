@@ -11,6 +11,31 @@ def make_instance(el):
 		obj['lang'] = el.xpath('Language/text()')[0]
 	return obj
 
+def process_role(el):
+	global linked_role_data,missed_terms,linked_roles
+	value = el.xpath('Role/text()')
+	role_element = el.xpath('Role')[0]
+	if len(value):
+		for term in value:
+			if not term in linked_roles['term_lookup'].keys():
+				nearest_term = process.extractOne(term,linked_roles['term_lookup'].keys())
+				if nearest_term[-1] > 85:
+					term = nearest_term[0]
+				else:
+					missed_terms.append(term)
+					break
+			canonical_term = linked_roles['term_lookup'][term]
+			data = linked_roles[canonical_term]
+			role_element.attrib['authorityURI'] = data['source']['value']
+			role_element.attrib['valueURI'] = data['entity']['value']
+			role_element.attrib['code'] = data['entity']['value'].split('/')[-1]
+			lang = el.xpath('Language')
+			if len(lang):
+				for lang_el in lang:
+					if lang_el.text:
+						role_element.attrib['lang'] = lang_el.text
+		linked_role_data.append(el)
+
 roles = etree.parse('itma.roles.xml')
 linked_role_data = etree.Element("NamedRoles")
 
@@ -21,30 +46,11 @@ missed_terms = []
 
 people_store = {'creator':{},'contributor':{}}
 
+
+
 with click.progressbar(roles.xpath('//NamedRole'),label="Linking to authority files...") as bar:
 	for el in bar:
-		value = el.xpath('Role/text()')
-		role_element = el.xpath('Role')[0]
-		if len(value):
-			for term in value:
-				if not term in linked_roles['term_lookup'].keys():
-					nearest_term = process.extractOne(term,linked_roles['term_lookup'].keys())
-					if nearest_term[-1] > 85:
-						term = nearest_term[0]
-					else:
-						missed_terms.append(term)
-						break
-				canonical_term = linked_roles['term_lookup'][term]
-				data = linked_roles[canonical_term]
-				role_element.attrib['authorityURI'] = data['source']['value']
-				role_element.attrib['valueURI'] = data['entity']['value']
-				role_element.attrib['code'] = data['entity']['value'].split('/')[-1]
-				lang = el.xpath('Language')
-				if len(lang):
-					for lang_el in lang:
-						if lang_el.text:
-							role_element.attrib['lang'] = lang_el.text
-			linked_role_data.append(el)
+		
 
 etree.ElementTree(linked_role_data).write('itma.roles.linked.xml',pretty_print=True)
 
