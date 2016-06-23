@@ -2,6 +2,7 @@ import json,click
 from multiprocessing.dummy import Pool
 from fuzzywuzzy import process
 from lxml import etree
+from itertools import repeat
 
 def make_instance(el):
 	obj = {}
@@ -12,9 +13,10 @@ def make_instance(el):
 		obj['lang'] = el.xpath('Language/text()')[0]
 	return obj
 
-def process_role(role):
+def process_role(role,el):
 	global missed_terms,linked_roles
 	term = role.text
+	print role
 	if not term in linked_roles['term_lookup'].keys():
 		nearest_term = process.extractOne(term,linked_roles['term_lookup'].keys())
 		if nearest_term[-1] > 90:
@@ -34,10 +36,10 @@ def process_role(role):
 				if lang_el.text:
 					role.attrib['lang'] = lang_el.text
 
-def process_roles(el):
+def process_role_list(el):
 	global linked_role_data
 	roles = el.xpath('Role')
-	map(process_role,roles)
+	map(process_role,roles,repeat(el,len(roles)))
 	linked_role_data.append(el)
 
 roles = etree.parse('itma.roles.xml')
@@ -48,9 +50,10 @@ with open('linked_roles_lookup.json','r') as f:
 
 missed_terms = []
 
-roles = roles.xpath('//NamedRole')
+role_list = roles.xpath('//NamedRole')[0:10]
 pool = Pool(processes=4)
-map(process_role,roles)
+
+map(process_role_list,role_list)
 
 etree.ElementTree(linked_role_data).write('itma.roles.linked.xml',pretty_print=True)
 
