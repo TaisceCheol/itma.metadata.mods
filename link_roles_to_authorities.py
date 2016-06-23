@@ -4,36 +4,6 @@ from fuzzywuzzy import process
 from lxml import etree
 from multiprocessing.dummy import Pool
 
-def get_carriers():
-	sparql = SPARQLWrapper("http://localhost:8095/sparql")
-	sparql.setQuery("""
-		PREFIX rdf: <http://www.w3.org/2000/01/rdf-schema#>
-		PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-	    SELECT ?entity ?label
-	    WHERE { 
-	    	?entity skos:prefLabel ?label .
-			# FILTER (langMatches(lang(?label),'en'))
-	    }
-	""")
-	sparql.setReturnFormat(JSON)
-	results = sparql.query().convert()
-	return [x['label']['value'] for x in results['results']['bindings']]
-
-def get_single_carrier(carrier):
-	sparql = SPARQLWrapper("http://localhost:8095/sparql")
-	sparql.setQuery("""
-		PREFIX rdf: <http://www.w3.org/2000/01/rdf-schema#>
-		PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-	    SELECT ?entity
-	    WHERE { 
-	    	?entity skos:prefLabel "%s"@en
-	    }
-	    LIMIT 1
-	""" % carrier)
-	sparql.setReturnFormat(JSON)
-	results = sparql.query().convert()
-	return results['results']['bindings'][0]
-
 def get_aat_term(item):
 	sparql = SPARQLWrapper("http://localhost:8097/sparql")
 	sparql.setQuery("""
@@ -172,15 +142,12 @@ def process_role(el):
 						failed.append(value)
 						print 'Failed to link term: %s' % value								
 
-
 relators = get_relators()
-
 instruments = get_instruments()
 
-roles = etree.parse('itma.roles.xml')
+roles = etree.parse('../itma.roles.xml')
 
 linked_roles = {}
-
 term_lookup = {}
 
 failed = []
@@ -189,9 +156,8 @@ print 'Linking to authority files'
 roles = roles.xpath('//NamedRole')
 map(process_role,roles)
 
-		
 linked_roles['term_lookup'] = term_lookup
 
-with open("linked_roles_lookup.json",'w') as f:
+with open("../linked_roles_lookup.json",'w') as f:
 	json.dump(linked_roles,f,indent=True)
 
