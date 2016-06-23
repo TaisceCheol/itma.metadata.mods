@@ -48,8 +48,6 @@ with open('linked_roles_lookup.json','r') as f:
 
 missed_terms = []
 
-people_store = {'creator':{},'contributor':{}}
-
 roles = roles.xpath('//NamedRole')
 pool = Pool(processes=4)
 map(process_role,roles)
