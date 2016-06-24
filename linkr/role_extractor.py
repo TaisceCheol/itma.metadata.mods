@@ -57,7 +57,7 @@ class Extract():
 		record = record.replace('=','')
 		data = {'name':[],'role':[],'locations':[],'tracks':[],'TYPE':TYPE,'REFNO':REFNO}	
 
-	        if record in cache.keys():
+	        if record in self.cache.keys():
 			# print 'Found cached record: %s' % record
 	                data['name'] = self.cache[record]['name']
 	                data['role'] = self.cache[record]['role']

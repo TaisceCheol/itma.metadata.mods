@@ -11,13 +11,13 @@ linked_cat_path = 'itma.cat.linked.xml'
 ## Pipeline Extract -> Resolve -> Map -> Link ##
 ################################################
 
-print 'Extracting...'
+print '::Extracting...'
 role_extractor.Extract(soutron_cat,role_path)
-print 'Resolving'
+print '::Resolving'
 r = resolve2auths.Resolvr()
 r.link_roles(role_path,roles_lookup_path)
-print 'Mapping'
+print '::Mapping'
 map_roles.MapR(role_path,roles_lookup_path,linked_role_path)
-print 'Linking'
+print '::Linking'
 link2catalog.Link(soutron_cat,linked_role_path,linked_cat_path)
 
