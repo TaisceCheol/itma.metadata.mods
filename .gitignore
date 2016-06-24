@@ -1,6 +1,6 @@
 *.xml
 *.json
-
+*.pyc
 # Compiled source #
 ###################
 *.com
