@@ -4,11 +4,12 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 from lxml import etree
 
 class PlaceR():
-	def __init__(self,records,output_file):
+	def __init__(self,records,output_file,unmatched):
 		self.geolocator = Nominatim()
 		self.cache = {}
-		self.placelist = etree.Element("PlaceList")
+		self.placelist = etree.Element("Locations")
 		self.logainm_links = {}
+		self.unmatched = []
 		places = []
 		[[places.append(y.text) for y in x.xpath('*[self::CreationLocation or self::GeographicalLocation]')] for x in records]
 		map(self.locate,places)
@@ -17,11 +18,15 @@ class PlaceR():
 
 		etree.ElementTree(self.placelist).write(output_file,pretty_print=True)
 
+		with open(unmatched,'w') as f:
+			for item in self.unmatched:
+				f.write(item+'\n')
+
 	def create_xml_nodes(self,record,field):
 		for item in record.xpath(field):
 			place = item.text
 			if place in self.cache.keys():
-				el = etree.Element('Place',catid=record.attrib['CID'],type=field.lower())
+				el = etree.Element('Location',catid=record.attrib['CID'],type=field.lower())
 				el.text = place
 				for key,value in self.cache[place].raw.iteritems():
 					el.attrib[key] = unicode(value)
@@ -66,6 +71,6 @@ class PlaceR():
 					if location != None:
 						self.cache[place] = location
 				else:
-					print "Place could not be found '%s'" % place
+					print "Place could not be found: '%s'" % place
 		return None
 	
