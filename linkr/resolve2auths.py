@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import json,click,subprocess,os,threading
+import json,click,subprocess,os,threading,time
 from SPARQLWrapper import SPARQLWrapper, JSON
 from fuzzywuzzy import process
 from lxml import etree
@@ -14,7 +14,8 @@ class Redstore(threading.Thread):
 		self.stdout = None
 		self.stderr = None
 		threading.Thread.__init__(self)
-	
+		self.daemon = True
+
 	def run(self):
 		p = subprocess.Popen(('redstore -p %s -b localhost' % self.port).split(),
 				shell=False,stdout=subprocess.PIPE,
@@ -37,10 +38,10 @@ class Resolvr():
 		print 'Linking to authority files'
 		roles = roles.xpath('//NamedRole')
 		map(self.process_role,roles)
-		linked_roles['term_lookup'] = term_lookup
+	 	self.linked_roles['term_lookup'] = self.term_lookup
 
 		with open(output_file,'w') as f:
-			json.dump(linked_roles,f,indent=True)
+			json.dump(self.linked_roles,f,indent=True)
 
 	def start_triplestores(self):
 		FNULL = open(os.devnull, 'w')
@@ -52,6 +53,7 @@ class Resolvr():
 			print 'starting on port %s' % item[-1]['port']
 			x = Redstore(item[-1]['port'])
 			x.start()
+			time.sleep(0.25)
 			subprocess.check_call(["curl",'-T',item[-1]['file'],'-H','Content-Type: application/x-turtle','http://localhost:%s/data/%s' % (item[-1]['port'],item[0])],stdout=FNULL,stderr=FNULL)
 
 
@@ -82,7 +84,8 @@ class Resolvr():
 			    	  ?entity rdfs:label "%s"@en .
 			    	  ?entity wdt:P1330 ?id .
 			    	  wd:P1330 wdt:P1630 ?url .
-			    	  wd:P1330 wdt:P1896 ?source .
+			    	  wd:P1330 wdt:P1896 ?source  
+			}
 		""" % term )
 		sparql.setReturnFormat(JSON)
 		results = sparql.query().convert()
@@ -218,5 +221,4 @@ class Resolvr():
 							
 # r = Resolvr()
 # r.link_roles()
-
 

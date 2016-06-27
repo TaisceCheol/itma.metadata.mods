@@ -7,17 +7,18 @@ from xml.sax.saxutils import escape
 
 class Link():
 	
-	def __init__(self,catalog_path,linked_roles_path,linked_catalog_path):
+	def __init__(self,records,linked_roles_path,linked_catalog_path):
 		# import source records
 		print 'Reading catalogue records'
-		catalogue = etree.parse(catalog_path)
+		#catalogue = etree.parse(catalog_path)
 		self.linked_roles = etree.parse(linked_roles_path)
-		records = catalogue.xpath('/recordlist/record')
+		#records = catalogue.xpath('/recordlist/record')
 		self.linked_cat = etree.Element('recordlist')				
 		pool = Pool(processes=4)
 		map(self.process_record,records)
 		# write linked catalogue xml
 		etree.ElementTree(self.linked_cat).write(linked_catalog_path,pretty_print=True)
+		print '::-- Process Complete --::'
 		
 	def process_match(self,item,name):
 		roles = item.xpath('Role')

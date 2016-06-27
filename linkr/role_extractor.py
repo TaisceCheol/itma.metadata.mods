@@ -7,33 +7,31 @@ from fuzzywuzzy import process as fuzzyproc
 from multiprocessing.dummy import Pool
 
 class Extract():
-	def __init__(self,cat_xml,outfile):
+	def __init__(self,records,outfile):
 		#cat_xml = "../itma.cat.soutron_20160216.xml"
 		print 'Parsing XML data...'
-		records = etree.parse(cat_xml)
+		#records = etree.parse(cat_xml)
 		self.counter = 0
 		self.roles = []
 		self.locations = []
 		cfields = []
 		refnos = []
 
-		[cfields.append(p) for p in records.xpath('/recordlist/record/*[self::Creator or self::Contributors]')]
-		[self.locations.append(p) for p in records.xpath('/recordlist/record/GeographicalLocation/text()')]
-
+		self.records = records
+		[[cfields.append(y) for y in x.xpath('*[self::Creator or self::Contributors]')] for x in records]
+		[[self.locations.append(y) for y in x.xpath('GeographicalLocation/text()')] for x in records]
+		
 		map(self.parse_roles,cfields)
-
 		self.roles = list(set([x.replace('\n','').strip() for x in filter(lambda x:len(x) > 1,self.roles)]))
 		self.locations = list(set(self.locations))
 
 		self.role_list = etree.Element("NamedRoles")
 
-		self.recordlist = records.xpath('/recordlist/record')[0:100]
-
 		self.cache = {}
 
 		print 'extracting roles...'
-		pool = Pool(processes=8)
-		pool.map(self.process_recordlist,self.recordlist)
+		pool = Pool(processes=4)
+		pool.map(self.process_recordlist,records)
 			
 		return etree.ElementTree(self.role_list).write(outfile,pretty_print=True)
 
@@ -134,7 +132,5 @@ class Extract():
 			self.role_list.append(el)
 			self.counter += 1
 			if self.counter % 1000 == 0:
-				print self.counter/float(len(self.recordlist))
-
-
+				print self.counter/float(len(self.records))
 

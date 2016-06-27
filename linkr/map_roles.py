@@ -15,7 +15,7 @@ class MapR():
 
 		self.missed_terms = []
 
-		role_list = roles.xpath('//NamedRole')[0:10]
+		role_list = roles.xpath('//NamedRole')
 		pool = Pool(processes=4)
 
 		map(self.process_role_list,role_list)
