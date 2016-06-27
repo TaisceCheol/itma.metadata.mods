@@ -11,7 +11,7 @@ class Extract():
 		#cat_xml = "../itma.cat.soutron_20160216.xml"
 		print 'Parsing XML data...'
 		records = etree.parse(cat_xml)
-
+		self.counter = 0
 		self.roles = []
 		self.locations = []
 		cfields = []
@@ -27,15 +27,15 @@ class Extract():
 
 		self.role_list = etree.Element("NamedRoles")
 
-		recordlist = records.xpath('/recordlist/record')
+		self.recordlist = records.xpath('/recordlist/record')[0:100]
 
 		self.cache = {}
 
 		print 'extracting roles...'
-		pool = Pool(processes=4)
-		pool.map(self.process_recordlist,recordlist)
+		pool = Pool(processes=8)
+		pool.map(self.process_recordlist,self.recordlist)
 			
-		return etree.ElementTree(role_list).write(outfile,pretty_print=True)
+		return etree.ElementTree(self.role_list).write(outfile,pretty_print=True)
 
 	def parse_roles(self,record):
 		for x in record.text.split(','):
@@ -50,17 +50,15 @@ class Extract():
 		newvalue = re.sub("(?:\d|\=|\?|\[|\]|\)|\(|A|B|\/|\-)","",newvalue)
 		return newvalue.strip()
 
-
 	def main_parser(self,record,REFNO,TYPE,people):
 		if "Unidentified" not in people:
 			people.append("Unidentified")
 		record = record.replace('=','')
 		data = {'name':[],'role':[],'locations':[],'tracks':[],'TYPE':TYPE,'REFNO':REFNO}	
-
-	        if record in self.cache.keys():
+		if record in self.cache.keys():
 			# print 'Found cached record: %s' % record
-	                data['name'] = self.cache[record]['name']
-	                data['role'] = self.cache[record]['role']
+			data['name'] = self.cache[record]['name']
+			data['role'] = self.cache[record]['role']
 			data['locations'] = self.cache[record]['locations']
 			data['tracks'] = self.cache[record]['tracks']
 		elif len(people):
@@ -134,7 +132,9 @@ class Extract():
 		xml_records = [self.format_as_xml(x) for x in extracted_entities]
 		for el in xml_records:
 			self.role_list.append(el)
-
+			self.counter += 1
+			if self.counter % 1000 == 0:
+				print self.counter/float(len(self.recordlist))
 
 
 
