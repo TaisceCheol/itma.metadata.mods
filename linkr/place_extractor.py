@@ -1,10 +1,12 @@
 # -*- encoding: UTF-8 -*-
+import redis
 from geopy.geocoders import Nominatim
 from SPARQLWrapper import SPARQLWrapper, JSON
 from lxml import etree
 
 class PlaceR():
 	def __init__(self,records,output_file,unmatched):
+		self.redis_cache = redis.StrictRedis(host='localhost',port=6379,db=0)
 		self.geolocator = Nominatim()
 		self.cache = {}
 		self.placelist = etree.Element("Locations")
@@ -25,10 +27,11 @@ class PlaceR():
 	def create_xml_nodes(self,record,field):
 		for item in record.xpath(field):
 			place = item.text
-			if place in self.cache.keys():
+			if place in self.redis_cache.keys():
+				location = json.loads(self.redis_cache.get(place))
 				el = etree.Element('Location',catid=record.attrib['CID'],type=field.lower())
 				el.text = place
-				for key,value in self.cache[place].raw.iteritems():
+				for key,value in location.raw.iteritems():
 					el.attrib[key] = unicode(value)
 				if place.split(',')[0] in self.logainm_links.keys():
 					el.attrib['logainm'] = self.logainm_links[place.split(',')[0]]
@@ -59,17 +62,22 @@ class PlaceR():
 				self.logainm_links[place] = item['place']['value']
 
 	def locate(self,place):
-		if place not in self.cache.keys():
+		if place not in self.redis_cache.keys():
 			location = self.geolocator.geocode(place)
 			if location != None:
-				self.cache[place] = location
+				location = json.dumps(location)
+				self.redis_cache.set(place,location)
 			else:
 				if len(place.split(',')) > 1:
-					place = place[place.index(',')+1:].strip()
-					# remove possible event name from place string and try once more to geocode
-					location = self.geolocator.geocode(place)
-					if location != None:
-						self.cache[place] = location
+					second_order_place = place[place.index(',')+1:].strip()
+					if second_order_place not in self.redis_cache.keys():
+						# remove possible event name from place string and try once more to geocode
+						location = self.geolocator.geocode(second_order_place)
+						if location != None:
+							location = json.dumps(location)
+							self.redis_cache.set(place,location)
+					else:
+						self.redis_cache.set(place,self.redis_cache.get(second_order_place))
 				else:
 					print "Place could not be found: '%s'" % place
 		return None
