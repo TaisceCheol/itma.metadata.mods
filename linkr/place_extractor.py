@@ -1,5 +1,5 @@
 # -*- encoding: UTF-8 -*-
-import redis
+import redis,json
 from geopy.geocoders import Nominatim
 from SPARQLWrapper import SPARQLWrapper, JSON
 from lxml import etree
