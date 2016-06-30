@@ -7,7 +7,7 @@ from lxml import etree
 class PlaceR():
 	def __init__(self,records,output_file,unmatched):
 		self.redis_cache = redis.StrictRedis(host='localhost',port=6379,db=0)
-		self.geolocator = Nominatim()
+		self.geolocator = Nominatim(timeout=3000)
 		self.cache = {}
 		self.placelist = etree.Element("Locations")
 		self.logainm_links = {}
