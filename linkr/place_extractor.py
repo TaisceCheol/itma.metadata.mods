@@ -82,7 +82,7 @@ class PlaceR():
 						result = self.log_sparql_query(place,place_key)		
 
 	def locate(self,place):
-		if place not in self.redis_cache.keys() and place not in self.unmatched:
+		if place not in self.redis_cache.keys() and place.lower() not in self.unmatched:
 			location = self.geolocator.geocode(place)
 			if location != None:
 				raw_location = location.raw
@@ -102,6 +102,6 @@ class PlaceR():
 						self.redis_cache.set(place,self.redis_cache.get(second_order_place))
 				else:
 					print "Place could not be found: '%s'" % place
-					self.unmatched.append(place)
+					self.unmatched.append(place.lower())
 		return None
 	

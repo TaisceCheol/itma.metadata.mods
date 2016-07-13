@@ -27,7 +27,7 @@ print '::Resolving'
 r = resolve2auths.Resolvr()
 r.link_roles(role_path,roles_lookup_path,names_lookup_path)
 print '::Mapping'
-map_roles.MapR(role_path,roles_lookup_path,linked_role_path)
+map_roles.MapR(role_path,roles_lookup_path,names_lookup_path,linked_role_path)
 print '::Linking'
 link2catalog.Link(records,linked_role_path,linked_cat_path,place_path)
 

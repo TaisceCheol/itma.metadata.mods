@@ -6,12 +6,15 @@ from itertools import repeat
 
 class MapR():
 
-	def __init__(self,roles_file,roles_lookup,linked_roles,unresolved_terms_path='unresolved_terms.txt'):	
+	def __init__(self,roles_file,roles_lookup,names_lookup,linked_roles,unresolved_terms_path='unresolved_terms.txt'):	
 		roles = etree.parse(roles_file)
 		self.linked_role_data = etree.Element("NamedRoles")
 
 		with open(roles_lookup,'r') as f:
 			self.linked_roles = json.load(f)
+
+		with open(names_lookup,'r') as f:
+			self.linked_names = json.load(f)
 
 		self.missed_terms = []
 
@@ -56,8 +59,14 @@ class MapR():
 					if lang_el.text:
 						role.attrib['lang'] = lang_el.text
 
+	def process_name(self,name,el):
+		if name.text in self.linked_names.keys():
+			el.attrib['viaf_url'] = self.linked_names[name.text]
+
 	def process_role_list(self,el):
 		roles = el.xpath('Role')
-		map(self.process_role,roles,repeat(el,len(roles)))
+		map(self.process_role,roles,repeat(el,len(roles)))		
+		names = el.xpath('Name')
+		map(self.process_name,names,repeat(el,len(names)))
 		self.linked_role_data.append(el)
 

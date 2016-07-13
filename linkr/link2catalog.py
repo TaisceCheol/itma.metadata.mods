@@ -34,6 +34,8 @@ class Link():
 			name.attrib['name'] = name.text	
 			name.text = None
 			map(self.process_match,match,repeat(name,len(match)))
+			if 'viaf_url' in match[0].attrib.keys():
+				name.attrib['viaf-url'] = match[0].attrib['viaf_url']
 
 	def process_record(self,record):
 		cid = record.attrib['CID']
