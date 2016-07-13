@@ -28,15 +28,16 @@ class PlaceR():
 	def create_xml_nodes(self,record,field):
 		for item in record.xpath(field):
 			place = item.text
-			if place in self.redis_cache.keys():
-				location = json.loads(self.redis_cache.get(place))
-				el = etree.Element('Location',catid=record.attrib['CID'],type=field.lower())
-				el.text = place
-				for key,value in location.iteritems():
-					el.attrib[key] = unicode(value)
-				if place in self.logainm_links.keys():
-					el.attrib['logainm'] = self.logainm_links[place]
-				self.placelist.append(el)		
+			if place in self.redis_cache:
+				if self.redis_cache.get(place) != None:
+					location = json.loads(self.redis_cache.get(place))
+					el = etree.Element('Location',catid=record.attrib['CID'],type=field.lower())
+					el.text = place
+					for key,value in location.iteritems():
+						el.attrib[key] = unicode(value)
+					if place in self.logainm_links.keys():
+						el.attrib['logainm'] = self.logainm_links[place]
+					self.placelist.append(el)		
 
 	def link_to_record(self,record):
 		for field in ['GeographicalLocation','CreationLocation']:
@@ -82,26 +83,29 @@ class PlaceR():
 						result = self.log_sparql_query(place,place_key)		
 
 	def locate(self,place):
-		if place not in self.redis_cache.keys() and place.lower() not in self.unmatched:
-			location = self.geolocator.geocode(place)
-			if location != None:
-				raw_location = location.raw
-				raw_location['address'] = location.address
-				self.redis_cache.set(place,json.dumps(raw_location))
-			else:
-				if len(place.split(',')) > 1:
-					second_order_place = place[place.index(',')+1:].strip()
-					if second_order_place not in self.redis_cache.keys():
-						# remove possible event name from place string and try once more to geocode
-						location = self.geolocator.geocode(second_order_place)
-						if location != None:
-							raw_location = location.raw
-							raw_location['address'] = location.address
-							self.redis_cache.set(place,json.dumps(raw_location))
-					else:
-						self.redis_cache.set(place,self.redis_cache.get(second_order_place))
+		if place not in self.redis_cache: 
+			if self.redis_cache.get(place) != None:
+				location = self.geolocator.geocode(place)
+				if location != None:
+					raw_location = location.raw
+					raw_location['address'] = location.address
+					self.redis_cache.set(place,json.dumps(raw_location))
 				else:
-					print "Place could not be found: '%s'" % place
-					self.unmatched.append(place.lower())
+					if len(place.split(',')) > 1:
+						second_order_place = place[place.index(',')+1:].strip()
+						if second_order_place not in self.redis_cache.keys():
+							# remove possible event name from place string and try once more to geocode
+							location = self.geolocator.geocode(second_order_place)
+							if location != None:
+								raw_location = location.raw
+								raw_location['address'] = location.address
+								self.redis_cache.set(place,json.dumps(raw_location))
+						else:
+							self.redis_cache.set(place,self.redis_cache.get(second_order_place))
+					else:
+						print "Place could not be found: '%s'" % place
+						# store unknown places in cache as NoneType
+						self.redis_cache.set(place,None)
+						self.unmatched.append(place)
 		return None
 	
