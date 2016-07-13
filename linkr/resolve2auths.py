@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import json,click,subprocess,os,threading,time
+import json,click,subprocess,os,threading,time,urllib2
 from SPARQLWrapper import SPARQLWrapper, JSON
 from fuzzywuzzy import process
 from lxml import etree
@@ -33,15 +33,21 @@ class Resolvr():
 
 		self.failed = []
 
-	def link_roles(self,role_file='../itma.roles.xml', output_file='../linked_roles_lookup.json'):
+	def link_roles(self,role_file='../itma.roles.xml', output_file_roles='../data_outputs/linked_roles_lookup.json',output_file_names='../data_outputs/linked_names_lookup.json'):
 		roles = etree.parse(role_file)
+	 	names = roles.xpath('//NamedRole/Name/text()')		
 		print 'Linking to authority files'
 		roles = roles.xpath('//NamedRole')
 		map(self.process_role,roles)
 	 	self.linked_roles['term_lookup'] = self.term_lookup
-
-		with open(output_file,'w') as f:
+	 	viaf_records = filter(lambda x: x != None,map(self.link_name,names))
+	 	linked_name_store = {}
+	 	for entry in viaf_records:
+	 		linked_name_store[entry[0]] = entry[-1]
+		with open(output_file_roles,'w') as f:
 			json.dump(self.linked_roles,f,indent=True)
+	 	with open(output_file_names,'w') as f:
+	 		json.dump(linked_name_store,f,indent=True)
 
 	def start_triplestores(self):
 		FNULL = open(os.devnull, 'w')
@@ -218,7 +224,48 @@ class Resolvr():
 	def process_role(self,el):
 		values = el.xpath('Role/text()')
 		map(self.get_match,values)
-							
+	
+
+	def has_musicbrainz_id(self,term):
+		sparql = SPARQLWrapper("http://query.wikidata.org/sparql")
+		sparql.setQuery("""
+			PREFIX wd: <http://www.wikidata.org/entity/> 
+			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+		    SELECT *
+		    WHERE { 
+		    	  ?entity wdt:P214 "%s" ;
+		    	  		wdt:P434 ?musicbrainzid
+		    }
+		""" % term)
+		sparql.setReturnFormat(JSON)
+		results = sparql.query().convert()
+		return results['results']['bindings']
+
+	def link_name(self,query):
+		viafid = None
+		baseurl = "http://www.viaf.org/viaf/AutoSuggest?query="
+		response = urllib2.urlopen(baseurl + urllib2.quote(query))
+		data = json.load(response)
+
+		matches = set()
+
+		if data['result']:
+			for r in data['result']:
+				if int(r['score']) > 1000:
+					matches.add(r['viafid'])
+
+		if len(matches) > 1:
+			for item in matches:
+				result = has_musicbrainz_id(item)
+				if len(result):
+					viafid = item
+		elif len(list(matches)):
+			viafid = list(matches)[0]
+
+		if viafid:
+			return [query,"https://viaf.org/viaf/%s" % viafid]
+		else:
+			return None							
 # r = Resolvr()
 # r.link_roles()
 

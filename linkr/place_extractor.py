@@ -44,7 +44,7 @@ class PlaceR():
 	
 	def log_sparql_query(self,place,place_key):
 		got_result = False
-		if place not in self.logainm_links.keys():
+		if unicode(place) not in self.logainm_links.keys():
 			sparql = SPARQLWrapper("http://data.logainm.ie/sparql")
 			sparql.setQuery("""
 					PREFIX log: <http://data.logainm.ie/ontology/>
@@ -67,14 +67,22 @@ class PlaceR():
 	def link_to_logainm(self,location,place_key):
 		place = location['address'].split(',')[0]
 		matches = self.log_sparql_query(place,place_key)
-		if matches == True:
-			print self.logainm_links
 		if matches == False:
-			place = location['address'].split(',')[1].strip()
-			self.log_sparql_query(place,place_key)
+			addr = location['address']
+			if len(addr.split(',')) == 1:
+				self.log_sparql_query(location['address'],place_key)
+			else:
+				place = addr.split(',')[0].strip()
+				result = self.log_sparql_query(place,place_key)
+				if result == False and len(addr.split(',')) >= 2:
+					place = addr.split(',')[1].strip()
+					result = self.log_sparql_query(place,place_key)		
+					if result == False and len(addr.split(',')) >= 3:
+						place = addr.split(',')[2].strip()
+						result = self.log_sparql_query(place,place_key)		
 
 	def locate(self,place):
-		if place not in self.redis_cache.keys():
+		if place not in self.redis_cache.keys() and place not in self.unmatched:
 			location = self.geolocator.geocode(place)
 			if location != None:
 				raw_location = location.raw
@@ -94,5 +102,6 @@ class PlaceR():
 						self.redis_cache.set(place,self.redis_cache.get(second_order_place))
 				else:
 					print "Place could not be found: '%s'" % place
+					self.unmatched.append(place)
 		return None
 	
