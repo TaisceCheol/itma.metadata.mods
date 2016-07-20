@@ -7,7 +7,7 @@ from xml.sax.saxutils import escape
 
 class Link():
 	
-	def __init__(self,records,linked_roles_path,linked_catalog_path,linked_places):
+	def __init__(self,records,linked_roles_path,linked_catalog_path,linked_places,materials_lookup_path):
 		# import source records
 		print 'Reading catalogue records'
 		#catalogue = etree.parse(catalog_path)
@@ -15,7 +15,8 @@ class Link():
 		#records = catalogue.xpath('/recordlist/record')
 		self.linked_cat = etree.Element('recordlist')				
 		self.locations = etree.parse(linked_places)
-
+		with open(materials_lookup_path,'r') as f:
+			self.material_lookup = json.load(f)
 		pool = Pool(processes=4)
 		map(self.process_record,records)
 		# write linked catalogue xml
@@ -37,11 +38,20 @@ class Link():
 			if 'viaf_url' in match[0].attrib.keys():
 				name.attrib['viaf-url'] = match[0].attrib['viaf_url']
 
+	def process_material(self,material):
+		term = material.text.lower()
+		if term in self.material_lookup:
+			material.attrib['getty_uri'] = self.material_lookup[term]['uri']
+			material.attrib['getty_preferred'] = self.material_lookup[term]['label']
+
 	def process_record(self,record):
 		cid = record.attrib['CID']
 		people = record.xpath('People')
 		if len(people):
 			map(self.process_name,people,repeat(cid,len(people)))
+		material = record.xpath('MaterialType')
+		if len(material):
+			map(self.process_material,material)
 		self.link_places(record,cid)
 		self.linked_cat.append(record)
 

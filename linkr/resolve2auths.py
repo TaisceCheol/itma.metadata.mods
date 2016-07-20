@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+	# -*- coding: utf-8 -*-
 import json,click,subprocess,os,threading,time,urllib2
 from SPARQLWrapper import SPARQLWrapper, JSON
 from fuzzywuzzy import process
@@ -23,10 +23,11 @@ class Redstore(threading.Thread):
 		self.stdout,self.stderr = p.communicate()
 
 class Resolvr():
-	def __init__(self):
-		self.start_triplestores()
-		self.relators = self.get_relators()
-		self.instruments = self.get_instruments()
+	def __init__(self,autostart=True):
+		if autostart == True:
+			self.start_triplestores()
+			self.relators = self.get_relators()
+			self.instruments = self.get_instruments()
 
 		self.linked_roles = {}
 		self.term_lookup = {}
@@ -35,7 +36,7 @@ class Resolvr():
 
 	def link_roles(self,role_file='../itma.roles.xml', output_file_roles='../data_outputs/linked_roles_lookup.json',output_file_names='../data_outputs/linked_names_lookup.json'):
 		roles = etree.parse(role_file)
-	 	names = roles.xpath('//NamedRole/Name/text()')		
+	 	names = roles.xpath('//NamedRole/Name/text()')	
 		print 'Linking to authority files'
 		roles = roles.xpath('//NamedRole')
 		map(self.process_role,roles)
@@ -54,13 +55,15 @@ class Resolvr():
 		triple_stores = {}
 		triple_stores['lcmpt'] = {'port':'8090','file':'/Users/ITMA/.authorities/authoritiesperformanceMediums.ttl'}
 		triple_stores['relators'] = {'port':'8092','file':'/Users/ITMA/.authorities/relators.ttl'}
+		triple_stores['carriers'] = {'port':'8096','file':'/Users/ITMA/.authorities/es_carriers.rdf'}
+
 		print 'Starting triplestores...'
 		for item in triple_stores.iteritems():
 			print 'starting on port %s' % item[-1]['port']
 			x = Redstore(item[-1]['port'])
 			x.start()
 			time.sleep(0.25)
-			subprocess.check_call(["curl",'-T',item[-1]['file'],'-H','Content-Type: application/x-turtle','http://localhost:%s/data/%s' % (item[-1]['port'],item[0])],stdout=FNULL,stderr=FNULL)
+			subprocess.check_call(["curl",'-T',item[-1]['file'],'http://localhost:%s/data/%s' % (item[-1]['port'],item[0])],stdout=FNULL,stderr=FNULL)
 
 
 	def get_aat_term(self,item):

@@ -5,7 +5,6 @@ from lxml import etree
 from itertools import repeat
 
 class MapR():
-
 	def __init__(self,roles_file,roles_lookup,names_lookup,linked_roles,unresolved_terms_path='unresolved_terms.txt'):	
 		roles = etree.parse(roles_file)
 		self.linked_role_data = etree.Element("NamedRoles")
