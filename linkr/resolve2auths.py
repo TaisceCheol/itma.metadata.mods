@@ -29,7 +29,9 @@ class Resolvr():
 			self.relators = self.get_relators()
 			self.instruments = self.get_instruments()
 
-		self.redis_cache = redis.StrictRedis(host='localhost',port=6379,db=1)
+		self.redis_roles_cache = redis.StrictRedis(host='localhost',port=6379,db=1)
+		self.redis_lookup_cache = redis.StrictRedis(host='localhost',port=6379,db=2)
+
 		self.linked_roles = {}
 		self.term_lookup = {}
 		self.failed = []
@@ -137,6 +139,7 @@ class Resolvr():
 		return [x['instrument']['value'] for x in results['results']['bindings']]
 
 	def get_single_instrument(self,rel):
+		print rel
 		sparql = SPARQLWrapper("http://localhost:8090/sparql")
 		sparql.setQuery("""
 			PREFIX madsrdf: <http://www.loc.gov/mads/rdf/v1#>
@@ -146,7 +149,6 @@ class Resolvr():
 				?entity madsrdf:authoritativeLabel "%s"@en ;
 						madsrdf:authoritativeLabel ?label ;
 						skos:inScheme ?source ;
-
 		    }
 		    LIMIT 1
 		""" % rel)
@@ -187,15 +189,14 @@ class Resolvr():
 		return results['results']['bindings'][0]
 
 	def get_match(self,term):
-		if term not in self.redis_cache and term not in self.failed:
-			# check self.relators first
+		if term not in self.redis_lookup_cache and term not in self.failed:
 			result = process.extract(term,self.relators,limit=1)
 			if len(result) and result[0][-1] > 90:
-				if result[0][0] not in self.linked_roles.keys():
-					# print term,result[0][0]
+				if result[0][0] not in self.linked_roles:
 					self.linked_roles[result[0][0]] = self.get_single_relator(result[0][0])
-					self.redis_cache.put(result[0][0],self.get_single_instrument(result[0][0]))
+					self.redis_roles_cache.set(result[0][0],json.dumps(self.linked_roles[result[0][0]]))
 					self.term_lookup[term] = result[0][0]
+					self.redis_lookup_cache.set(term,result[0][0])
 			else:
 				# then self.instruments			
 				result = process.extract(term,self.instruments,limit=1)
@@ -203,8 +204,9 @@ class Resolvr():
 					if result[0][0] not in self.linked_roles.keys():
 						# print term,result[0][0]
 						self.linked_roles[result[0][0]] = self.get_single_instrument(result[0][0])
-						self.redis_cache.put(result[0][0],self.get_single_instrument(result[0][0]))
+						self.redis_roles_cache.set(result[0][0],json.dumps(self.linked_roles[result[0][0]]))
 						self.term_lookup[term] = result[0][0]
+						self.redis_lookup_cache.set(term,result[0][0])
 				else:
 					#then getty
 					try:
@@ -214,8 +216,10 @@ class Resolvr():
 					if len(aat) != 0:
 						# print term,aat
 						self.linked_roles[term] = aat
-						self.redis_cache.put(term,aat)
+						self.redis_roles_cache.set(term,json.dumps(aat))
 						self.term_lookup[term] = aat
+						self.redis_lookup_cache.set(term,aat)
+
 					else:
 						print 'Trying dbpedia for: %s' % term
 						for item in self.musicbrainz_instrument(term):
@@ -225,14 +229,14 @@ class Resolvr():
 							# print 'Failed to link term: %s' % term	
 		else:
 			if term not in self.linked_roles:
-				index = self.term_lookup[term] 
-				self.linked_roles[index] = self.redis_cache.get(index)
-	
+				index = self.redis_lookup_cache.get(term)
+				self.linked_roles[index] = json.loads(self.redis_roles_cache.get(index))
+				self.term_lookup[term] = index
+
 	def process_role(self,el):
 		values = el.xpath('Role/text()')
 		map(self.get_match,values)
 	
-
 	def has_musicbrainz_id(self,term):
 		sparql = SPARQLWrapper("http://query.wikidata.org/sparql")
 		sparql.setQuery("""

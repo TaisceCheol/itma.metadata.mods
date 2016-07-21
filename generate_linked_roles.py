@@ -16,7 +16,7 @@ linked_cat_path = 'data_outputs/itma.cat.linked.xml'
 ## Pipeline Extract -> Resolve -> Map -> Link ##
 ################################################
 
-n_records = 20
+n_records = 25
 offset = 0
 
 records = etree.parse(soutron_cat).xpath('/recordlist/record')[offset:offset+n_records]
