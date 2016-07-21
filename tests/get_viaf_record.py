@@ -42,3 +42,21 @@ def link_name(query):
 	else:
 		return viafid
 
+def musicbrainz_instrument(term):
+		sparql = SPARQLWrapper("http://dbpedia.org/sparql")
+		sparql.setQuery("""
+				PREFIX wd: <http://www.wikidata.org/entity/> 
+				PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+			    SELECT ?entity ?label ?source ?id ?url
+			    WHERE { 
+			    	  ?entity rdfs:label "%s"@en .
+			    	  OPTIONAL {?entity wdt:P1330 ?id} .
+			    	  OPTIONAL {wd:P1330 wdt:P1630 ?url} .
+			    	  OPTIONAL {wd:P1330 wdt:P1896 ?source } 
+			}
+		""" % term )
+		sparql.setReturnFormat(JSON)
+		results = sparql.query().convert()
+		return results['results']['bindings']
+
+print musicbrainz_instrument('Drums')[0]

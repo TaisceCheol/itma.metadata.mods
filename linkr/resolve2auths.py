@@ -28,10 +28,9 @@ class Resolvr():
 			self.start_triplestores()
 			self.relators = self.get_relators()
 			self.instruments = self.get_instruments()
-
 		self.redis_roles_cache = redis.StrictRedis(host='localhost',port=6379,db=1)
 		self.redis_lookup_cache = redis.StrictRedis(host='localhost',port=6379,db=2)
-
+		self.vocal = ['tenor','baritone','soprano','alto','contralto']
 		self.linked_roles = {}
 		self.term_lookup = {}
 		self.failed = []
@@ -41,6 +40,7 @@ class Resolvr():
 	 	names = roles.xpath('//NamedRole/Name/text()')	
 		print 'Linking to authority files'
 		roles = roles.xpath('//NamedRole')
+		print roles
 		map(self.process_role,roles)
 	 	self.linked_roles['term_lookup'] = self.term_lookup
 	 	viaf_records = filter(lambda x: x != None,map(self.link_name,names))
@@ -97,7 +97,7 @@ class Resolvr():
 			    	  wd:P1330 wdt:P1630 ?url .
 			    	  wd:P1330 wdt:P1896 ?source  
 			}
-		""" % term )
+		""" % term.title() )
 		sparql.setReturnFormat(JSON)
 		results = sparql.query().convert()
 		return results['results']['bindings']
@@ -189,49 +189,19 @@ class Resolvr():
 		return results['results']['bindings'][0]
 
 	def get_match(self,term):
-		if term not in self.redis_lookup_cache and term not in self.failed:
-			result = process.extract(term,self.relators,limit=1)
-			if len(result) and result[0][-1] > 90:
-				if result[0][0] not in self.linked_roles:
-					self.linked_roles[result[0][0]] = self.get_single_relator(result[0][0])
-					self.redis_roles_cache.set(result[0][0],json.dumps(self.linked_roles[result[0][0]]))
-					self.term_lookup[term] = result[0][0]
-					self.redis_lookup_cache.set(term,result[0][0])
+		if term not in self.linked_roles:
+			check_inst = process.extract(term,self.instruments,limit=1)
+			if check_inst[0][-1] > 90 or term in self.vocal:
+				role = 'Performer'
+				term = check_inst[0][0] 
 			else:
-				# then self.instruments			
-				result = process.extract(term,self.instruments,limit=1)
-				if len(result) and result[0][-1] > 90:
-					if result[0][0] not in self.linked_roles.keys():
-						# print term,result[0][0]
-						self.linked_roles[result[0][0]] = self.get_single_instrument(result[0][0])
-						self.redis_roles_cache.set(result[0][0],json.dumps(self.linked_roles[result[0][0]]))
-						self.term_lookup[term] = result[0][0]
-						self.redis_lookup_cache.set(term,result[0][0])
+				# next check if in relators
+				check_relators = process.extract(term,self.relators,limit=1)
+				if check_relators[0][-1] > 90:
+					role = check_relators[0][0]
 				else:
-					#then getty
-					try:
-						aat = get_aat_term(term)
-					except:
-						aat = []
-					if len(aat) != 0:
-						# print term,aat
-						self.linked_roles[term] = aat
-						self.redis_roles_cache.set(term,json.dumps(aat))
-						self.term_lookup[term] = aat
-						self.redis_lookup_cache.set(term,aat)
-
-					else:
-						print 'Trying dbpedia for: %s' % term
-						for item in self.musicbrainz_instrument(term):
-							print item
-						# else:
-							# self.failed.append(term)
-							# print 'Failed to link term: %s' % term	
-		else:
-			if term not in self.linked_roles:
-				index = self.redis_lookup_cache.get(term)
-				self.linked_roles[index] = json.loads(self.redis_roles_cache.get(index))
-				self.term_lookup[term] = index
+					role = 'Performer' 
+			self.linked_roles[term] = self.get_single_relator(role)
 
 	def process_role(self,el):
 		values = el.xpath('Role/text()')
@@ -255,28 +225,32 @@ class Resolvr():
 	def link_name(self,query):
 		viafid = None
 		baseurl = "http://www.viaf.org/viaf/AutoSuggest?query="
-		response = urllib2.urlopen(baseurl + urllib2.quote(query))
-		data = json.load(response)
+		print query		
+		try:
+			response = urllib2.urlopen(baseurl + urllib2.quote(query.decode('UTF-8')))
+			data = json.load(response)
 
-		matches = set()
+			matches = set()
 
-		if data['result']:
-			for r in data['result']:
-				if int(r['score']) > 1000:
-					matches.add(r['viafid'])
+			if data['result']:
+				for r in data['result']:
+					if int(r['score']) > 1000:
+						matches.add(r['viafid'])
 
-		if len(matches) > 1:
-			for item in matches:
-				result = has_musicbrainz_id(item)
-				if len(result):
-					viafid = item
-		elif len(list(matches)):
-			viafid = list(matches)[0]
+			if len(matches) > 1:
+				for item in matches:
+					result = self.has_musicbrainz_id(item)
+					if len(result):
+						viafid = item
+			elif len(list(matches)):
+				viafid = list(matches)[0]
 
-		if viafid:
-			return [query,"https://viaf.org/viaf/%s" % viafid]
-		else:
-			return None							
+			if viafid:
+				return [query,"https://viaf.org/viaf/%s" % viafid]
+			else:
+				return None		
+		except:
+			return None					
 # r = Resolvr()
 # r.link_roles()
 
