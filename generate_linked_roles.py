@@ -9,7 +9,6 @@ unmatched_names = 'data_outputs/itma.unmatched.places.txt'
 roles_lookup_path = 'data_outputs/linked_roles_lookup.json'
 names_lookup_path = 'data_outputs/linked_names_lookup.json'
 materials_lookup_path = 'data_outputs/linked_materials_lookup.json'
-
 linked_role_path = 'data_outputs/itma.roles.linked.xml'
 linked_cat_path = 'data_outputs/itma.cat.linked.xml'
 
@@ -17,7 +16,7 @@ linked_cat_path = 'data_outputs/itma.cat.linked.xml'
 ## Pipeline Extract -> Resolve -> Map -> Link ##
 ################################################
 
-n_records = 50
+n_records = 20
 offset = 0
 
 records = etree.parse(soutron_cat).xpath('/recordlist/record')[offset:offset+n_records]

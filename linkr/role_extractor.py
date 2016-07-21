@@ -46,6 +46,7 @@ class Extract():
 		newvalue = re.sub("[A-Za-z]\d","",newvalue)
 		newvalue = re.split("(.*)\son\s.*",newvalue)[0]
 		newvalue = re.sub("(?:\d|\=|\?|\[|\]|\)|\(|A|B|\/|\-)","",newvalue)
+		newvalue = re.sub("\W+","",newvalue)
 		return newvalue.strip()
 
 	def main_parser(self,record,REFNO,TYPE,people):

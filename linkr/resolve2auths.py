@@ -1,5 +1,5 @@
 	# -*- coding: utf-8 -*-
-import json,click,subprocess,os,threading,time,urllib2
+import json,click,subprocess,os,threading,time,urllib2,redis
 from SPARQLWrapper import SPARQLWrapper, JSON
 from fuzzywuzzy import process
 from lxml import etree
@@ -29,9 +29,9 @@ class Resolvr():
 			self.relators = self.get_relators()
 			self.instruments = self.get_instruments()
 
+		self.redis_cache = redis.StrictRedis(host='localhost',port=6379,db=1)
 		self.linked_roles = {}
 		self.term_lookup = {}
-
 		self.failed = []
 
 	def link_roles(self,role_file='../itma.roles.xml', output_file_roles='../data_outputs/linked_roles_lookup.json',output_file_names='../data_outputs/linked_names_lookup.json'):
@@ -187,13 +187,14 @@ class Resolvr():
 		return results['results']['bindings'][0]
 
 	def get_match(self,term):
-		if term not in self.linked_roles.keys() and term not in self.failed:
+		if term not in self.redis_cache and term not in self.failed:
 			# check self.relators first
 			result = process.extract(term,self.relators,limit=1)
 			if len(result) and result[0][-1] > 90:
 				if result[0][0] not in self.linked_roles.keys():
 					# print term,result[0][0]
 					self.linked_roles[result[0][0]] = self.get_single_relator(result[0][0])
+					self.redis_cache.put(result[0][0],self.get_single_instrument(result[0][0]))
 					self.term_lookup[term] = result[0][0]
 			else:
 				# then self.instruments			
@@ -202,6 +203,7 @@ class Resolvr():
 					if result[0][0] not in self.linked_roles.keys():
 						# print term,result[0][0]
 						self.linked_roles[result[0][0]] = self.get_single_instrument(result[0][0])
+						self.redis_cache.put(result[0][0],self.get_single_instrument(result[0][0]))
 						self.term_lookup[term] = result[0][0]
 				else:
 					#then getty
@@ -212,17 +214,19 @@ class Resolvr():
 					if len(aat) != 0:
 						# print term,aat
 						self.linked_roles[term] = aat
-						self.term_lookup[term] = result[0][0]
+						self.redis_cache.put(term,aat)
+						self.term_lookup[term] = aat
 					else:
-						# attempt to catch recursively using tokenization
-						# if len(term.split()) > 1:
-							# print 'Failed to get match for %s. Attempting to recursively match across: %s' % (term,str(term.split()))
 						print 'Trying dbpedia for: %s' % term
 						for item in self.musicbrainz_instrument(term):
 							print item
 						# else:
 							# self.failed.append(term)
 							# print 'Failed to link term: %s' % term	
+		else:
+			if term not in self.linked_roles:
+				index = self.term_lookup[term] 
+				self.linked_roles[index] = self.redis_cache.get(index)
 	
 	def process_role(self,el):
 		values = el.xpath('Role/text()')
