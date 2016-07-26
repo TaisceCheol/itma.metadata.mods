@@ -51,6 +51,14 @@ class Resolvr():
 			json.dump(self.linked_roles,f,indent=True)
 	 	with open(output_file_names,'w') as f:
 	 		json.dump(linked_name_store,f,indent=True)
+	 	with open('data_outputs/all_names.json','w') as f:
+	 		all_names = {}
+	 		for item in sorted(names):
+	 			if item in linked_name_store:
+	 				all_names[item] = linked_name_store[item]
+	 			else:
+	 				all_names[item] = None
+	 		json.dump(all_names,f,indent=True)
 
 	def start_triplestores(self):
 		FNULL = open(os.devnull, 'w')
@@ -258,6 +266,5 @@ class Resolvr():
 				return None		
 		except:
 			return None					
-# r = Resolvr()
-# r.link_roles()
+
 

@@ -16,12 +16,12 @@ linked_cat_path = 'data_outputs/itma.cat.linked.xml'
 ## Pipeline Extract -> Resolve -> Map -> Link ##
 ################################################
 
-n_records = 10
+n_records = -1
 offset = 0
 
 records = filter(lambda x:x.xpath('DocType')[0].text != 'Copy',etree.parse(soutron_cat).xpath('/recordlist/record'))
-seed(10001)
-shuffle(records)
+# seed(10001)
+# shuffle(records)
 
 records = records[offset:offset+n_records]
 
