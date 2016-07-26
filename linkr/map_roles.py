@@ -39,16 +39,18 @@ class MapR():
 
 	def process_role(self,role,el):
 		term = role.text
-		if not term in self.linked_roles['term_lookup'].keys():
-			nearest_term = process.extractOne(term,self.linked_roles['term_lookup'].keys())
-			if nearest_term[-1] > 90:
-				term = nearest_term[0]
-			else:
-				self.missed_terms.append(term)
-				term = None
+		print term
+		# if not term in self.linked_roles['term_lookup'].keys():
+		# 	nearest_term = process.extractOne(term,self.linked_roles['term_lookup'].keys())
+		# 	if nearest_term != None:
+		# 		if nearest_term[-1] > 90:
+		# 			term = nearest_term[0]
+		# 		else:
+		# 			self.missed_terms.append(term)
+		# 			term = None
 		if term != None:
-			canonical_term = self.linked_roles['term_lookup'][term]
-			data = self.linked_roles[canonical_term]
+			# canonical_term = self.linked_roles['term_lookup'][term]
+			data = self.linked_roles[term]
 			role.attrib['authorityURI'] = data['source']['value']
 			role.attrib['valueURI'] = data['entity']['value']
 			role.attrib['code'] = data['entity']['value'].split('/')[-1]

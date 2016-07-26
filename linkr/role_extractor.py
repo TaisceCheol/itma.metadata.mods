@@ -12,7 +12,7 @@ class Extract():
 		print 'Parsing XML data...'
 		#records = etree.parse(cat_xml)
 		self.counter = 0
-		self.roles = []
+		self.roles = ['performer']
 		self.locations = []
 		cfields = []
 		refnos = []
@@ -38,7 +38,7 @@ class Extract():
 	def parse_roles(self,record):
 		for x in record.text.split(','):
 			if len(x.split()) and x.split()[0].strip().islower():
-				if len(x.split()) <= 3 and x.split()[0] != 'and':
+				if len(x.split()) <= 3 and x.split()[0] != 'and' and x.split()[0] != 'various' and x.split()[0] != '[various':
 					self.roles.append(self.prepare_roles(x))
 
 	def prepare_roles(self,value):
@@ -46,12 +46,12 @@ class Extract():
 		newvalue = re.sub("[A-Za-z]\d","",newvalue)
 		newvalue = re.split("(.*)\son\s.*",newvalue)[0]
 		newvalue = re.sub("(?:\d|\=|\?|\[|\]|\)|\(|A|B|\/|\-)","",newvalue)
-		newvalue = re.sub("\W+","",newvalue)
+		# print 'Role: %s' % newvalue.strip()
 		return newvalue.strip()
 
-	def main_parser(self,record,REFNO,TYPE,people):
-		if "Unidentified" not in people:
-			people.append("Unidentified")
+	def main_parser(self,record,REFNO,TYPE,people,doctype):
+		# if "Unidentified" not in people:
+			# people.append("Unidentified")
 		record = record.replace('=','')
 		data = {'name':[],'role':[],'locations':[],'tracks':[],'TYPE':TYPE,'REFNO':REFNO}	
 		if record in self.cache.keys():
@@ -66,7 +66,7 @@ class Extract():
 			if len(tracks):
 				for y in tracks[0][0].split(','):
 					data['tracks'].append(y.strip())
-				record = record.replace(tracks[0][0],'').strip()
+				record = record.replace(tracks[0][0],'\n').strip()
 			tokens = filter(lambda x: x not in data['name'].split(),[y.strip() for y in record.split(',')])
 			for item in tokens:
 				if item in self.roles:
@@ -79,6 +79,8 @@ class Extract():
 			# print 'Caching record: %s' % record
 			self.cache[record] = data		
 		data['role'] = list(set(data['role']))
+		if len(data['role']) == 0 and TYPE == 'CREATOR' and doctype == 'Sound Recording':
+			data['role'].append('performer')
 		return data
 
 	def join_same_name(self,data):
@@ -95,11 +97,15 @@ class Extract():
 				store[item['name']] = item
 		return store.values()
 
-	def format_as_xml(self,obj):
+	def format_as_xml(self,obj,dctype):
 		el = etree.Element("NamedRole",type=obj['TYPE'].lower())
 		el.attrib['id'] = obj['REFNO']
+		doctype = etree.SubElement(el,'DocType')
+		doctype.text = dctype
 		name = etree.SubElement(el,'Name')
 		name.text = obj['name']
+		if len(obj['role']) >= 2 and 'performer' in obj['role']:
+			del obj['role'][obj['role'].index('performer')]		
 		for role in obj['role']:
 			found_lang_el = False
 			# splits singing in Irish/English into singing/voice roles with a language term...
@@ -119,16 +125,22 @@ class Extract():
 	def process_recordlist(self,record):
 		extracted_entities = []
 		refno = record.attrib['CID']
-		people = list(set(record.xpath('People/text()')))
+		doctype = record.xpath('DocType/text()')[0]
+		people = [x.strip() for x in list(set(record.xpath('People/text()')))]
 		creators = set(record.xpath('Creator/text()'))
 		contributors = set(record.xpath('Contributors/text()'))
-		creators = [self.main_parser(x,refno,'CREATOR',people) for x in creators]
-		contributors = [self.main_parser(x,refno,'CONTRIBUTOR',people) for x in contributors]
+		creators = [self.main_parser(x,refno,'CREATOR',people,doctype) for x in creators]
+		contributors = [self.main_parser(x,refno,'CONTRIBUTOR',people,doctype) for x in contributors]
 		for x in creators + contributors:
-			if len(x['role']):
-				extracted_entities.append(x)
+			extracted_entities.append(x)
 		extracted_entities = self.join_same_name(extracted_entities)
-		xml_records = [self.format_as_xml(x) for x in extracted_entities]
+		extracted_names = [x['name'] for x in extracted_entities]
+		if doctype == 'Image':
+			depicted = filter(lambda x:x not in extracted_names,people)
+			for p in depicted:
+				data = {'name':p,'role':['depicted'],'REFNO':refno,'TYPE':'depicted'}	
+				extracted_entities.append(data)
+		xml_records = [self.format_as_xml(x,doctype) for x in extracted_entities]
 		for el in xml_records:
 			self.role_list.append(el)
 			self.counter += 1

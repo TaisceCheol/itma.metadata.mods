@@ -4,6 +4,7 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 from fuzzywuzzy import process
 from lxml import etree
 from multiprocessing.dummy import Pool
+from itertools import repeat 
 
 class Redstore(threading.Thread):
 	"""
@@ -40,7 +41,6 @@ class Resolvr():
 	 	names = roles.xpath('//NamedRole/Name/text()')	
 		print 'Linking to authority files'
 		roles = roles.xpath('//NamedRole')
-		print roles
 		map(self.process_role,roles)
 	 	self.linked_roles['term_lookup'] = self.term_lookup
 	 	viaf_records = filter(lambda x: x != None,map(self.link_name,names))
@@ -188,11 +188,14 @@ class Resolvr():
 		results = sparql.query().convert()
 		return results['results']['bindings'][0]
 
-	def get_match(self,term):
+	def get_match(self,term,record_type):
 		if term not in self.linked_roles:
 			check_inst = process.extract(term,self.instruments,limit=1)
-			if check_inst[0][-1] > 90 or term in self.vocal:
-				role = 'Performer'
+			if check_inst[0][-1] > 90:
+				if record_type == 'Sound Recording':
+					role = 'Performer'
+				else:
+					role = 'Creator'
 				term = check_inst[0][0] 
 			else:
 				# next check if in relators
@@ -200,12 +203,17 @@ class Resolvr():
 				if check_relators[0][-1] > 90:
 					role = check_relators[0][0]
 				else:
-					role = 'Performer' 
+					if record_type == 'Sound Recording':
+						role = 'Performer'
+					else:
+						role = 'Creator'
 			self.linked_roles[term] = self.get_single_relator(role)
+
 
 	def process_role(self,el):
 		values = el.xpath('Role/text()')
-		map(self.get_match,values)
+		record_type = el.xpath('DocType')[0].text
+		map(self.get_match,values,repeat(record_type,len(values)))
 	
 	def has_musicbrainz_id(self,term):
 		sparql = SPARQLWrapper("http://query.wikidata.org/sparql")
@@ -225,7 +233,6 @@ class Resolvr():
 	def link_name(self,query):
 		viafid = None
 		baseurl = "http://www.viaf.org/viaf/AutoSuggest?query="
-		print query		
 		try:
 			response = urllib2.urlopen(baseurl + urllib2.quote(query.decode('UTF-8')))
 			data = json.load(response)

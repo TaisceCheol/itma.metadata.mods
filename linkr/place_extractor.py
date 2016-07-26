@@ -13,7 +13,7 @@ class PlaceR():
 		self.logainm_links = {}
 		self.unmatched = []
 		places = []
-		[[places.append(y.text) for y in x.xpath('*[self::CreationLocation or self::GeographicalLocation]')] for x in records]
+		[[places.append(y.text) for y in x.xpath('*[self::CreationLocation or self::GeographicalLocation or self::PublisherLocation]')] for x in records]
 		map(self.locate,places)
 		cache_values = [json.loads(self.redis_cache.get(k)) for k in self.redis_cache.keys()]
 		map(self.link_to_logainm,cache_values,self.redis_cache.keys())
@@ -40,7 +40,7 @@ class PlaceR():
 					self.placelist.append(el)		
 
 	def link_to_record(self,record):
-		for field in ['GeographicalLocation','CreationLocation']:
+		for field in ['GeographicalLocation','CreationLocation','PublisherLocation']:
 			self.create_xml_nodes(record,field)
 	
 	def log_sparql_query(self,place,place_key):
